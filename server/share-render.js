@@ -1,4 +1,7 @@
 import sharp from "sharp";
+import opentype from "opentype.js";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import {
   formatPrice,
   SITE_URL,
@@ -100,6 +103,28 @@ export async function fetchPublicImage(value, { fetcher = fetch } = {}) {
   }
   return Buffer.concat(chunks);
 }
+let fonts;
+function outlinedText(value, x, y, size, color, bold = false) {
+  if (!fonts) {
+    const parse = (name) => {
+      const bytes = readFileSync(
+        path.join(process.cwd(), "server", "fonts", name),
+      );
+      return opentype.parse(
+        bytes.buffer.slice(
+          bytes.byteOffset,
+          bytes.byteOffset + bytes.byteLength,
+        ),
+      );
+    };
+    fonts = {
+      regular: parse("DejaVuSans.ttf"),
+      bold: parse("DejaVuSans-Bold.ttf"),
+    };
+  }
+  const font = bold ? fonts.bold : fonts.regular;
+  return `<path fill="${color}" d="${font.getPath(textOnly(value), x, y, size).toPathData(2)}"/>`;
+}
 export async function renderShareImage(
   property,
   { imageBuffer, fetcher } = {},
@@ -115,12 +140,11 @@ export async function renderShareImage(
         .jpeg({ quality: 84 })
         .toBuffer();
   } catch {
-    /* A branded fallback remains available when an external photo fails. */
+    /* Keep an honest visual fallback for unavailable photos. */
   }
   const title = wrapText(property.title, 26, 4),
-    price = escapeHtml(formatPrice(property.price, property.moneda)),
     location = wrapText(property.location || "Ubicación por consultar", 30, 2);
-  const details = [
+  const features = [
     Number(property.area) > 0
       ? `${Number(property.area).toLocaleString("es-PE")} m²`
       : null,
@@ -129,46 +153,35 @@ export async function renderShareImage(
   ]
     .filter(Boolean)
     .join(" · ");
-  const svg = Buffer.from(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630"><rect width="1200" height="630" fill="#f5f3ee"/>${picture ? "" : '<rect width="710" height="630" fill="#e3e8dc"/><path d="M150 365 315 220l100 98 95-125 130 170" stroke="#b8c4ad" stroke-width="15" fill="none"/><text x="355" y="450" text-anchor="middle" font-size="21" fill="#7b8a6e" font-family="sans-serif">Fotografía por confirmar</text>'}<rect x="710" width="490" height="630" fill="#f5f3ee"/><rect x="710" width="7" height="630" fill="#cf1830"/><path d="M756 75 776 55l11 11M775 75l21-27 18 22" fill="none" stroke="#cf1830" stroke-width="5"/><text x="830" y="62" font-family="sans-serif" font-weight="bold" font-size="19" fill="#202321">ALBERTO ALFARO</text><text x="831" y="79" font-family="sans-serif" letter-spacing="3" font-size="10" fill="#68765c">INMOBILIARIA</text><rect x="756" y="123" width="135" height="28" rx="2" fill="#e8e9e1"/><text x="768" y="142" font-size="13" font-family="sans-serif" font-weight="bold" fill="#556448">${escapeHtml(
-      textOnly(property.status || "INMUEBLE")
+  // All text is converted to vector paths with bundled fonts, independent of OS fonts.
+  const panel = Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630"><rect x="710" width="490" height="630" fill="#f5f3ee"/><rect x="710" width="7" height="630" fill="#cf1830"/><path d="M756 75 776 55l11 11M775 75l21-27 18 22" fill="none" stroke="#cf1830" stroke-width="5"/>${outlinedText("ALBERTO ALFARO", 830, 62, 19, "#202321", true)}${outlinedText("I N M O B I L I A R I A", 831, 80, 9, "#68765c")}<rect x="756" y="123" width="160" height="28" rx="2" fill="#e8e9e1"/>${outlinedText(
+      String(property.status || "INMUEBLE")
         .toUpperCase()
         .slice(0, 20),
-    )}</text><text x="756" y="209" font-family="sans-serif" font-weight="bold" font-size="35" letter-spacing="-1" fill="#cf1830">${price}</text>${title.map((line, i) => `<text x="756" y="${263 + i * 33}" font-family="sans-serif" font-weight="bold" font-size="24" fill="#202321">${escapeHtml(line)}</text>`).join("")}${location.map((line, i) => `<text x="756" y="${426 + i * 23}" font-family="sans-serif" font-size="17" fill="#6c7b5f">${escapeHtml(line)}</text>`).join("")}<line x1="756" y1="492" x2="1154" y2="492" stroke="#d5dccd"/><text x="756" y="525" font-family="sans-serif" font-size="16" fill="#556a44">${escapeHtml(details)}</text><text x="756" y="582" font-family="sans-serif" font-size="13" fill="#6b805a">VER FICHA · CONSULTAR · COORDINAR VISITA</text><rect y="615" width="710" height="15" fill="#cf1830"/></svg>`,
+      768,
+      143,
+      13,
+      "#556448",
+      true,
+    )}${outlinedText(formatPrice(property.price, property.moneda), 756, 209, 34, "#cf1830", true)}${title.map((line, i) => outlinedText(line, 756, 263 + i * 33, 23, "#202321", true)).join("")}${location.map((line, i) => outlinedText(line, 756, 426 + i * 23, 17, "#6c7b5f")).join("")}<line x1="756" y1="492" x2="1154" y2="492" stroke="#d5dccd"/>${outlinedText(features, 756, 525, 15, "#556a44")}${outlinedText("VER FICHA · CONSULTAR · COORDINAR VISITA", 756, 582, 12, "#6b805a")}<rect y="624" width="710" height="6" fill="#cf1830"/></svg>`,
   );
+  const base = sharp({
+    create: { width: 1200, height: 630, channels: 3, background: "#e3e8dc" },
+  });
   const layers = picture
-    ? [
-        { input: picture, left: 0, top: 0 },
-        { input: svg, left: 0, top: 0 },
-      ]
-    : [{ input: svg, left: 0, top: 0 }];
-  // The SVG background must not cover the photograph when composited.
-  if (picture) {
-    const panel = await sharp(svg)
-      .extract({ left: 710, top: 0, width: 490, height: 630 })
-      .png()
-      .toBuffer();
-    return sharp({
-      create: { width: 1200, height: 630, channels: 3, background: "#cf1830" },
-    })
-      .composite([
-        { input: picture, left: 0, top: 0 },
-        { input: panel, left: 710, top: 0 },
+    ? [{ input: picture, left: 0, top: 0 }]
+    : [
         {
           input: Buffer.from(
-            '<svg width="710" height="6"><rect width="710" height="6" fill="#cf1830"/></svg>',
+            `<svg width="710" height="630"><path d="M150 365 315 220l100 98 95-125 130 170" stroke="#b8c4ad" stroke-width="15" fill="none"/>${outlinedText("Fotografía por confirmar", 220, 450, 21, "#7b8a6e")}</svg>`,
           ),
           left: 0,
-          top: 624,
+          top: 0,
         },
-      ])
-      .jpeg({ quality: 87, mozjpeg: true })
-      .toBuffer();
-  }
-  return sharp({
-    create: { width: 1200, height: 630, channels: 3, background: "#f5f3ee" },
-  })
-    .composite(layers)
+      ];
+  return base
+    .composite([...layers, { input: panel, left: 0, top: 0 }])
     .jpeg({ quality: 87, mozjpeg: true })
     .toBuffer();
 }

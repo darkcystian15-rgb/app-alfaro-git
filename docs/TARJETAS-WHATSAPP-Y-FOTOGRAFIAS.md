@@ -37,3 +37,9 @@ galería; si el host externo impide cargar una imagen por CORS, su enlace origin
 - [Open Graph Protocol](https://ogp.me/).
 - [Rewrites en Vercel](https://vercel.com/docs/routing/rewrites).
 - [Configuración estática de Vercel](https://vercel.com/docs/project-configuration/vercel-json).
+
+## Tipografía estable en servidor
+
+El renderizador incluye DejaVu Sans y su licencia; convierte los textos a trazos
+vectoriales antes de generar el JPEG. No depende de que el runtime de Vercel tenga
+fuentes del sistema ni descarga fuentes de terceros durante la solicitud.

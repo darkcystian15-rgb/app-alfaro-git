@@ -24,6 +24,12 @@ const context = await browser.newContext({
   reducedMotion: "reduce",
   acceptDownloads: true,
 });
+if (Object.keys(headers).length) {
+  // Native browser downloads also need the origin-scoped Vercel authentication cookie.
+  await context.request.get(base, {
+    headers: { ...headers, "x-vercel-set-bypass-cookie": "true" },
+  });
+}
 if (Object.keys(headers).length)
   await context.route(base + "/**", (route) =>
     route.continue({ headers: { ...route.request().headers(), ...headers } }),
@@ -269,6 +275,10 @@ try {
     assert.equal(crawler.status(), 200);
     const html = await crawler.text();
     assert.ok(html.includes("og:image:width"));
+    assert.ok(
+      html.includes("/api/property-share?id=" + id),
+      "Crawler must receive property-specific metadata, not the generic SPA",
+    );
     assert.ok(html.includes('content="1200"'));
     assert.ok(!html.includes("/src/main.jsx"));
     const image = await context.request.get(
