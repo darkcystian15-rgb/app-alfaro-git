@@ -1,58 +1,73 @@
-import React, { useEffect, useState } from "react";
+import { useRef } from "react";
+import { Link } from "react-router-dom";
+import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
+import useProperties from "../hooks/useProperties";
 import PropertyCard from "./PropertyCard";
-import { fetchProperties } from "../services/properties";
-
+import { LoadingCards } from "./ResultsGrid";
 export default function FeaturedProperties() {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [retry, setRetry] = useState(0);
-  useEffect(() => {
-    const controller = new AbortController();
-    setLoading(true);
-    setError("");
-    fetchProperties({ featured: "true" }, { signal: controller.signal })
-      .then(setItems)
-      .catch((e) => {
-        if (e.name !== "AbortError") setError(e.message);
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
-      });
-    return () => controller.abort();
-  }, [retry]);
+  const { items, loading, error, onRetry } = useProperties({
+      featured: "true",
+    }),
+    ref = useRef(null);
+  const move = (direction) =>
+    ref.current?.scrollBy({
+      left: direction * (ref.current.clientWidth + 24),
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+    });
   return (
-    <section className="alfaro-section" aria-labelledby="destacados-title">
-      <div className="mb-7">
-        <p className="alfaro-eyebrow">SELECCIÓN INMOBILIARIA</p>
-        <h2 id="destacados-title" className="alfaro-heading">
-          Propiedades destacadas
-        </h2>
-        <p className="mt-2 text-slate-600">
-          Oportunidades para vivir, invertir o hacer crecer tu negocio.
-        </p>
+    <section
+      className="featured-section section-space shell"
+      aria-labelledby="destacados-title"
+    >
+      <div className="section-heading">
+        <div>
+          <span className="eyebrow">UNA SELECCIÓN PARA TI</span>
+          <h2 id="destacados-title">
+            Espacios que merecen
+            <br />
+            <em>una segunda mirada.</em>
+          </h2>
+        </div>
+        <div className="section-heading-actions">
+          <Link className="text-link" to="/propiedades?featured=true">
+            Ver todos los destacados <ArrowUpRight size={17} />
+          </Link>
+          <div className="carousel-controls">
+            <button aria-label="Destacados anteriores" onClick={() => move(-1)}>
+              <ArrowLeft size={18} />
+            </button>
+            <button aria-label="Destacados siguientes" onClick={() => move(1)}>
+              <ArrowRight size={18} />
+            </button>
+          </div>
+        </div>
       </div>
       {loading ? (
-        <p role="status" className="py-10 text-center text-slate-500">
-          Cargando propiedades destacadas…
-        </p>
+        <LoadingCards />
       ) : error ? (
-        <p role="alert" className="rounded-xl bg-red-50 p-6 text-red-800">
-          {error}{" "}
-          <button onClick={() => setRetry((v) => v + 1)} className="underline">
+        <div className="empty-state" role="alert">
+          <p>{error}</p>
+          <button className="button button-dark" onClick={onRetry}>
             Reintentar
           </button>
-        </p>
-      ) : items.length === 0 ? (
-        <p className="rounded-xl bg-white p-6 text-slate-600">
-          Pronto tendremos nuevas propiedades destacadas.
-        </p>
-      ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {items.slice(0, 6).map((item) => (
-            <PropertyCard key={item.id} property={item} />
+        </div>
+      ) : items.length ? (
+        <div
+          className="featured-track"
+          ref={ref}
+          aria-label="Carrusel de propiedades destacadas"
+          tabIndex={0}
+        >
+          {items.map((p) => (
+            <PropertyCard key={p.id} property={p} />
           ))}
         </div>
+      ) : (
+        <p className="empty-state">
+          Pronto tendremos nuevas propiedades destacadas.
+        </p>
       )}
     </section>
   );

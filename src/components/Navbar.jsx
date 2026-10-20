@@ -1,187 +1,132 @@
-import React, { useState, useRef, useEffect } from "react";
-import { FiMenu, FiX } from "react-icons/fi";
-import { UserRound, Mail, BookOpen } from "lucide-react";
-
-/**
- * Componente reutilizable para dropdowns
- */
-const NavItemDropdown = ({ label, dropdownKey, openDropdown, toggleDropdown, isMobile, closeMobileMenu }) => {
-  const isOpen = openDropdown === dropdownKey;
-
-  return (
-    <div className={`relative ${isMobile ? "" : "relative"}`}>
-      {/* Botón del dropdown */}
-      <button
-        onClick={() => toggleDropdown(dropdownKey)}
-        aria-haspopup="true"
-        aria-expanded={isOpen}
-        className={`flex items-center justify-between w-full ${
-          isMobile
-            ? "px-4 py-3 text-left font-medium text-gray-800 transition-colors duration-300 focus:outline-none no-underline hover:no-underline active:no-underline"
-            : "nav-link flex items-center space-x-1 focus:outline-none"
-        }`}
-      >
-        <span>{label}</span>
-        <svg
-          className={`w-4 h-4 transform transition-transform duration-300 ease-in-out ${
-            isOpen ? "rotate-180 text-azul-primario" : "rotate-0 text-gray-600"
-          }`}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-
-      {/* Contenido del dropdown */}
-      {isOpen && (
-        <div
-          className={`${
-            isMobile
-              ? "pl-6 border-l border-azul-primario bg-transparent animate-slide-down"
-              : "dropdown-menu animate-slide-down"
-          }`}
-        >
-          {[
-            { href: "/acerca-de-nosotros", label: "Acerca de Nosotros", icon: <UserRound className="w-[18px] h-[18px] shrink-0" style={{ color: "#d10d0d" }} /> },
-            { href: "/contacto", label: "Contacto", icon: <Mail className="w-[18px] h-[18px] shrink-0" style={{ color: "#d10d0d" }} /> },
-            { href: "/nuestra-historia", label: "Nuestra Historia", icon: <BookOpen className="w-[18px] h-[18px] shrink-0" style={{ color: "#d10d0d" }} /> },
-          ].map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-2 w-full px-4 py-2 text-gray-700 transition-colors duration-300 ${
-                isMobile
-                  ? "hover:bg-[#bfdbfe] no-underline hover:no-underline focus:no-underline active:no-underline"
-                  : "dropdown-item hover:bg-[#bfdbfe]"
-              }`}
-              onClick={() => isMobile && closeMobileMenu()}
-            >
-              {item.icon}
-              <span className="text-sm">{item.label}</span>
-            </a>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
+import { useEffect, useRef, useState } from "react";
+import { Link, NavLink, useLocation } from "react-router-dom";
+import { Menu, X, Heart, ArrowUpRight, ChevronDown, Phone } from "lucide-react";
+import { usePortal } from "../context/PortalContext";
+import Brand from "./Brand";
 export default function Navbar() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [openDropdown, setOpenDropdown] = useState(null);
-  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 965);
-  const wrapperRef = useRef(null);
-
-  // Detectar si la pantalla es <965px
+  const [open, setOpen] = useState(false),
+    [more, setMore] = useState(false),
+    location = useLocation(),
+    ref = useRef(null),
+    { favorites } = usePortal();
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobileView(window.innerWidth < 965);
-    };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  // Cerrar al hacer click fuera
+    setOpen(false);
+    setMore(false);
+  }, [location.pathname, location.search]);
   useEffect(() => {
-    function handleClickOutside(event) {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
-        setOpenDropdown(null);
-        setIsMobileMenuOpen(false);
+    const close = (e) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+        setMore(false);
       }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+      if (e.type === "pointerdown" && !ref.current?.contains(e.target)) {
+        setOpen(false);
+        setMore(false);
+      }
+    };
+    document.addEventListener("keydown", close);
+    document.addEventListener("pointerdown", close);
+    return () => {
+      document.removeEventListener("keydown", close);
+      document.removeEventListener("pointerdown", close);
+    };
   }, []);
-
-  const toggleDropdown = (key) => setOpenDropdown(openDropdown === key ? null : key);
-  const toggleMobileMenu = () => { setIsMobileMenuOpen(!isMobileMenuOpen); setOpenDropdown(null); };
-  const closeMobileMenu = () => setIsMobileMenuOpen(false);
-
   return (
-    <nav ref={wrapperRef} className="navbar fixed w-full z-50 bg-white shadow-navbar transition-shadow duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
-          
-          {/* LOGO */}
-          <div className="flex-1 flex justify-center">
-            <a href="/" className="flex items-center">
-              <img
-                src="/logo.png"
-                alt="Logo"
-                className="h-20 md:h-20 lg:h-20 w-auto transition-transform duration-300 hover:scale-105 hover:shadow-logo-hover rounded-lg"
-              />
-            </a>
-          </div>
-
-          {/* Menú Desktop → aparece solo si ancho ≥965px */}
-          {!isMobileView && (
-            <div className="flex space-x-8">
-
-              <a href="/vende-o-alquila" className="nav-link">
-                VENDE O ALQUILA CON NOSOTROS
-              </a>
-
-              <a href="/servicios" className="nav-link">SERVICIOS</a>
-
-              <NavItemDropdown
-                label="CONÓCENOS"
-                dropdownKey="conocenos"
-                openDropdown={openDropdown}
-                toggleDropdown={toggleDropdown}
-                isMobile={false}
-              />
-
-              <a href="/blog" className="nav-link">BLOG</a>
-              <a href="/asesores" className="nav-link">ASESORES</a>
-            </div>
-          )}
-
-          {/* Botón menú móvil (solo <965px) */}
-          {isMobileView && (
-            <div className="flex items-center absolute right-4">
-              <button
-                onClick={toggleMobileMenu}
-                aria-label={isMobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
-                className="text-2xl focus:outline-none"
-              >
-                {isMobileMenuOpen ? <FiX /> : <FiMenu />}
-              </button>
-            </div>
-          )}
+    <header className="site-header" ref={ref}>
+      <div className="header-top">
+        <div className="shell">
+          <span>Chimbote · Nuevo Chimbote · Y más ubicaciones</span>
+          <a href="tel:+51940221494">
+            <Phone size={12} /> +51 940 221 494
+          </a>
         </div>
       </div>
-
-      {/* Menú móvil */}
-      {isMobileView && isMobileMenuOpen && (
-        <div className="bg-white shadow-navbar border-t border-gray-200 animate-slide-down">
-          <a href="/vende-o-alquila" className="block px-4 py-3 text-gray-800 hover:bg-[#bfdbfe]" onClick={closeMobileMenu}>
-            VENDE O ALQUILA CON NOSOTROS
-          </a>
-          <a href="/servicios" className="block px-4 py-3 text-gray-800 hover:bg-[#bfdbfe]" onClick={closeMobileMenu}>
-            SERVICIOS
-          </a>
-
-          <NavItemDropdown
-            label="CONÓCENOS"
-            dropdownKey="conocenos"
-            openDropdown={openDropdown}
-            toggleDropdown={toggleDropdown}
-            isMobile={true}
-            closeMobileMenu={closeMobileMenu}
-          />
-
-          <a href="/blog" className="block px-4 py-3 text-gray-800 hover:bg-[#bfdbfe]" onClick={closeMobileMenu}>
-            BLOG
-          </a>
-          <a href="/asesores" className="block px-4 py-3 text-gray-800 hover:bg-[#bfdbfe]" onClick={closeMobileMenu}>
-            ASESORES
-          </a>
+      <nav className="main-nav shell" aria-label="Navegación principal">
+        <Link to="/" aria-label="Alberto Alfaro, inicio">
+          <Brand />
+        </Link>
+        <div className={"nav-links " + (open ? "is-open" : "")}>
+          <Link
+            className={
+              location.pathname.startsWith("/propiedades/resumen") ||
+              (location.pathname === "/propiedades" &&
+                !new URLSearchParams(location.search).get("status"))
+                ? "active"
+                : ""
+            }
+            to="/propiedades"
+          >
+            Propiedades
+          </Link>
+          <Link
+            className={
+              location.pathname === "/propiedades" &&
+              new URLSearchParams(location.search).get("status") === "Venta"
+                ? "active"
+                : ""
+            }
+            to="/propiedades?status=Venta"
+          >
+            Comprar
+          </Link>
+          <Link
+            className={
+              location.pathname === "/propiedades" &&
+              new URLSearchParams(location.search).get("status") === "Alquiler"
+                ? "active"
+                : ""
+            }
+            to="/propiedades?status=Alquiler"
+          >
+            Alquilar
+          </Link>
+          <NavLink to="/servicios">Servicios</NavLink>
+          <div className="nav-more">
+            <button
+              type="button"
+              aria-expanded={more}
+              onClick={() => setMore(!more)}
+            >
+              Conócenos <ChevronDown size={13} />
+            </button>
+            {more && (
+              <div className="nav-dropdown">
+                {[
+                  ["/acerca-de-nosotros", "Nosotros"],
+                  ["/nuestra-historia", "Nuestra historia"],
+                  ["/asesores", "Nuestros asesores"],
+                  ["/blog", "Blog y actualidad"],
+                  ["/contacto", "Contacto"],
+                ].map(([url, label]) => (
+                  <Link to={url} key={url}>
+                    {label}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+          <Link to="/vende-o-alquila" className="nav-offer">
+            Ofrece tu inmueble <ArrowUpRight size={14} />
+          </Link>
         </div>
-      )}
-    </nav>
+        <Link
+          className="nav-favorites"
+          to="/favoritos"
+          aria-label={`Favoritos, ${favorites.length} guardados`}
+        >
+          <Heart size={19} />
+          <span>{favorites.length}</span>
+        </Link>
+        <button
+          type="button"
+          className="mobile-menu-button"
+          aria-label={open ? "Cerrar menú" : "Abrir menú"}
+          aria-expanded={open}
+          onClick={() => setOpen(!open)}
+        >
+          {open ? <X /> : <Menu />}
+        </button>
+      </nav>
+    </header>
   );
 }

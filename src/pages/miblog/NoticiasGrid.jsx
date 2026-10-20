@@ -23,7 +23,9 @@ const NewsCard = ({ id, title, description, image, date }) => (
     </div>
 
     <div className="p-6 flex flex-col justify-between min-h-[200px]">
-      <h3 className="text-xl font-semibold text-gray-800 mb-3 line-clamp-2">{title}</h3>
+      <h3 className="text-xl font-semibold text-gray-800 mb-3 line-clamp-2">
+        {title}
+      </h3>
       <p className="text-gray-600 text-sm mb-5 line-clamp-3">{description}</p>
       <Link
         to={`/blog/noticias/${id}`}
@@ -74,7 +76,7 @@ const NoticiasGrid = () => {
   const cardsPerPage = 9;
 
   useEffect(() => {
-    fetch("/.netlify/functions/getNoticias")
+    fetch("/api/getNoticias")
       .then((res) => res.json())
       .then((data) => {
         const sorted = data
@@ -120,7 +122,9 @@ const NoticiasGrid = () => {
         {/* Panel de filtros */}
         <div className="flex flex-wrap justify-center md:justify-end items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl p-3 shadow-inner w-full md:w-auto">
           <div className="flex items-center gap-2">
-            <label className="text-gray-700 font-medium text-sm sm:text-base">Desde:</label>
+            <label className="text-gray-700 font-medium text-sm sm:text-base">
+              Desde:
+            </label>
             <input
               type="date"
               value={dateFrom}
@@ -133,7 +137,9 @@ const NoticiasGrid = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <label className="text-gray-700 font-medium text-sm sm:text-base">Hasta:</label>
+            <label className="text-gray-700 font-medium text-sm sm:text-base">
+              Hasta:
+            </label>
             <input
               type="date"
               value={dateTo}
@@ -203,4 +209,3 @@ const NoticiasGrid = () => {
 };
 
 export default NoticiasGrid;
-

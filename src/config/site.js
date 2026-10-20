@@ -1,23 +1,31 @@
-// Punto unico de configuracion comercial. No contiene secretos.
 export const CONTACT_WHATSAPP = "51940221494";
+export const SITE_URL = "https://app-alfaro-git-smoky.vercel.app";
 export const propertyUrl = (id) =>
   `/propiedades/resumen/${encodeURIComponent(id)}`;
+export const absolutePropertyUrl = (id) => SITE_URL + propertyUrl(id);
+export const currencyCode = (value) =>
+  /^(PEN|S\/\.?|sol(?:es)?)$/i.test(String(value || "").trim())
+    ? "PEN"
+    : /^(USD|US\$|\$|d[oó]lares?)$/i.test(String(value || "US$").trim())
+      ? "USD"
+      : String(value).trim();
+export function formatPrice(value, currency = "US$") {
+  if (
+    value === null ||
+    value === undefined ||
+    String(value).trim() === "" ||
+    !Number.isFinite(Number(value))
+  )
+    return "Precio a consultar";
+  const code = currencyCode(currency),
+    symbol = code === "PEN" ? "S/" : code === "USD" ? "US$" : code;
+  return `${symbol} ${new Intl.NumberFormat("es-PE", { maximumFractionDigits: 2 }).format(Number(value))}`;
+}
 export function contactUrl(property) {
   const message = property
-    ? `Hola, quisiera información sobre ${property.title || "este inmueble"} (${property.location || "ubicación por confirmar"}). ${typeof window !== "undefined" ? window.location.origin + propertyUrl(property.id) : propertyUrl(property.id)}`
-    : "Hola, deseo información sobre sus servicios inmobiliarios.";
+    ? `Hola, quisiera información sobre ${property.title || "este inmueble"} (${property.location || "ubicación por confirmar"}). ${absolutePropertyUrl(property.id)}`
+    : "Hola, deseo asesoría inmobiliaria de Alberto Alfaro.";
   return `https://wa.me/${CONTACT_WHATSAPP}?text=${encodeURIComponent(message)}`;
 }
-export function formatPrice(value, currency = "US$") {
-  if (value === null || value === undefined || String(value).trim() === "")
-    return "Precio a consultar";
-  const amount = Number(value);
-  if (!Number.isFinite(amount)) return "Precio a consultar";
-  const rawCurrency = String(currency || "US$").trim();
-  const symbol = /^(PEN|S\/\.?|soles?)$/i.test(rawCurrency)
-    ? "S/"
-    : /^(USD|US\$|\$|d[oó]lares?)$/i.test(rawCurrency)
-      ? "US$"
-      : rawCurrency;
-  return `${symbol} ${new Intl.NumberFormat("es-PE", { maximumFractionDigits: 2 }).format(amount)}`;
-}
+export const shareImageUrl = (id, download = false) =>
+  `/api/property-share?id=${encodeURIComponent(id)}&format=${download ? "download" : "image"}&v=2`;

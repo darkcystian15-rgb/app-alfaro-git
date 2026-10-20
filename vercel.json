@@ -2,12 +2,23 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/propiedades/resumen/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(WhatsApp|whatsapp|facebookexternalhit|Facebot|Twitterbot|LinkedInBot|Slackbot|TelegramBot|Discordbot|Googlebot|bingbot).*"
+        }
+      ],
+      "destination": "/api/property-share?id=:id"
+    },
+    {
       "source": "/asesores",
       "has": [
         {
           "type": "header",
           "key": "user-agent",
-          "value": ".(facebookexternalhit|Facebot|WhatsApp|whatsapp|Discord|discord|Twitterbot|LinkedInBot|Slackbot|TelegramBot|crawler|bot|preview)."
+          "value": ".*(facebookexternalhit|Facebot|WhatsApp|whatsapp|Discord|discord|Twitterbot|LinkedInBot|Slackbot|TelegramBot|crawler|bot|preview).*"
         }
       ],
       "destination": "/asesores-og.html"
@@ -16,5 +27,21 @@
       "source": "/:path((?!api/|assets/|favicon\\.ico$|robots\\.txt$|sitemap\\.xml$).*)",
       "destination": "/index.html"
     }
-  ]
+  ],
+  "headers": [
+    {
+      "source": "/propiedades/resumen/:id",
+      "headers": [
+        {
+          "key": "Vary",
+          "value": "User-Agent"
+        }
+      ]
+    }
+  ],
+  "functions": {
+    "api/property-share.js": {
+      "includeFiles": "server/fonts/**"
+    }
+  }
 }
