@@ -1,7 +1,8 @@
 // src/router/router.jsx
 import { createBrowserRouter } from "react-router-dom";
+import SavedProperties from "./pages/SavedProperties";
+import CompareProperties from "./pages/CompareProperties";
 import MainLayout from "./Layout/MainLayout";
-import SimpleLayout from "./Layout/SimpleLayout"; // 👈 Nuevo layout
 import Home from "./pages/Home";
 import Properties from "./pages/Properties";
 import Servicios from "./pages/Servicios";
@@ -28,6 +29,9 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Home /> },
       { path: "propiedades", element: <Properties /> },
+      { path: "favoritos", element: <SavedProperties /> },
+      { path: "comparar", element: <CompareProperties /> },
+      { path: "propiedades/resumen/:id", element: <PropertyResumenPage /> },
       { path: "login", element: <Login /> },
       { path: "registro", element: <Register /> },
       { path: "acerca-de-nosotros", element: <About /> },
@@ -51,16 +55,6 @@ const router = createBrowserRouter([
         ],
       },
     ],
-  },
-
-  // 🔸 Layout alternativo sin Navbar (solo para resumen de propiedad)
-  {
-    path: "/propiedades/resumen/:id",
-    element: (
-      <SimpleLayout>
-        <PropertyResumenPage />
-      </SimpleLayout>
-    ),
   },
 ]);
 

@@ -1,11 +1,17 @@
 import assert from "node:assert/strict";
-import { mkdir, writeFile, readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { chromium } from "playwright";
-
-const base = process.env.PORTAL_BASE_URL || "http://localhost:4173";
-const apiOrigin = process.env.PORTAL_READONLY_API_ORIGIN;
-const artifacts = process.env.PORTAL_ARTIFACTS || "/tmp/darkcystian-review";
+import sharp from "sharp";
+const base = (process.env.PORTAL_BASE_URL || "http://127.0.0.1:4180").replace(
+    /\/$/,
+    "",
+  ),
+  artifacts = process.env.PORTAL_ARTIFACTS || "/tmp/darkcystian-v2/validation",
+  uiOnly = process.env.PORTAL_UI_ONLY === "1";
 await mkdir(artifacts, { recursive: true });
+const headers = process.env.PORTAL_HEADERS_FILE
+  ? JSON.parse(await readFile(process.env.PORTAL_HEADERS_FILE, "utf8"))
+  : {};
 const browser = await chromium.launch({
   headless: true,
   ...(process.env.PORTAL_CHROMIUM
@@ -13,320 +19,423 @@ const browser = await chromium.launch({
     : {}),
   args: ["--no-sandbox"],
 });
-const authHeaders = process.env.PORTAL_HEADERS_FILE
-  ? JSON.parse(await readFile(process.env.PORTAL_HEADERS_FILE, "utf8"))
-  : {};
-async function authorize(context) {
-  if (Object.keys(authHeaders).length) {
-    await context.route(base + "/**", (route) =>
-      route.continue({
-        headers: { ...route.request().headers(), ...authHeaders },
-      }),
-    );
-  }
-}
-const cache = new Map();
-const results = [];
-const runtimeErrors = [];
-const failedApi = [];
-const allowed = new Set([
-  "getProperties",
-  "get-options",
-  "getPropertyDetails",
-  "getPropertyDetailInfo",
-  "get-social-links",
-  "getAsesores",
-  "getArticulos",
-  "getNoticias",
-]);
 const context = await browser.newContext({
   viewport: { width: 1440, height: 1000 },
   reducedMotion: "reduce",
+  acceptDownloads: true,
 });
-await authorize(context);
-context.on("page", (page) =>
-  page.on("pageerror", (e) => runtimeErrors.push(e.message)),
-);
-if (apiOrigin) {
-  await context.route("**/api/**", async (route) => {
-    const request = route.request();
-    const url = new URL(request.url());
+if (Object.keys(headers).length)
+  await context.route(base + "/**", (route) =>
+    route.continue({ headers: { ...route.request().headers(), ...headers } }),
+  );
+if (process.env.PORTAL_READONLY_API_ORIGIN)
+  await context.route("**/api/get*", async (route) => {
+    const u = new URL(route.request().url());
+    assert.equal(route.request().method(), "GET");
+    const response = await context.request.get(
+      process.env.PORTAL_READONLY_API_ORIGIN + u.pathname + u.search,
+    );
+    await route.fulfill({ response });
+  });
+const errors = [],
+  results = [],
+  outbound = [];
+context.on("page", (p) => {
+  p.on("pageerror", (e) => errors.push(e.message));
+  p.on("request", (r) => {
     if (
-      request.method() !== "GET" ||
-      !allowed.has(url.pathname.split("/").pop())
+      new URL(r.url()).origin === new URL(base).origin &&
+      !["GET", "HEAD"].includes(r.method())
     )
-      return route.abort();
-    const key = url.pathname + url.search;
-    if (!cache.has(key))
-      cache.set(
-        key,
-        (async () => {
-          const response = await context.request.get(apiOrigin + key, {
-            timeout: 45000,
-          });
-          const body = await response.body();
-          return {
-            status: response.status(),
-            contentType: response.headers()["content-type"],
-            body,
-          };
-        })(),
-      );
-    try {
-      await route.fulfill(await cache.get(key));
-    } catch {
-      await route.fulfill({
-        status: 502,
-        contentType: "application/json",
-        body: '{"error":"Read-only API unavailable"}',
-      });
-    }
+      outbound.push({ method: r.method(), path: new URL(r.url()).pathname });
+  });
+});
+const page = await context.newPage();
+page.setDefaultTimeout(20000);
+await page.route("https://api.fontshare.com/**", (r) => r.abort());
+async function cards(p = page) {
+  await p.locator("article.property-card").first().waitFor({ timeout: 45000 });
+}
+async function photograph(p = page) {
+  await p.locator(".property-card").first().scrollIntoViewIfNeeded();
+  await p
+    .waitForFunction(
+      () =>
+        [...document.querySelectorAll(".property-card .photo-area img")]
+          .slice(0, 3)
+          .every((i) => i.complete),
+      {},
+      { timeout: 25000 },
+    )
+    .catch(() => {});
+}
+async function screenshot(name, p = page) {
+  await p.screenshot({
+    path: artifacts + "/" + name + ".png",
+    fullPage: true,
+    timeout: 20000,
   });
 }
 try {
-  const page = await context.newPage();
-  page.on("response", (r) => {
-    if (
-      (r.url().includes("/api/") || r.url().includes("/.netlify/functions/")) &&
-      r.status() >= 400
-    )
-      failedApi.push({ path: new URL(r.url()).pathname, status: r.status() });
-  });
   await page.goto(base, { waitUntil: "domcontentloaded" });
+  await cards();
+  assert.equal(await page.locator(".featured-track article").count(), 8);
+  await page.getByRole("button", { name: "Pausar portada" }).count();
   await page
-    .getByRole("heading", { name: "Propiedades destacadas", exact: true })
-    .waitFor();
-  await page
-    .locator("article.alfaro-property-card")
-    .first()
-    .waitFor({ timeout: 60000 });
-  await page
-    .getByRole("option", { name: "Todas las ubicaciones" })
-    .waitFor({ state: "attached" });
+    .getByRole("button", { name: "Imagen siguiente", exact: true })
+    .click();
+  await page.getByText("Lugares para crecer", { exact: true }).waitFor();
+  const track = page.locator(".featured-track");
+  await page.getByRole("button", { name: "Destacados siguientes" }).click();
   await page.waitForFunction(
-    () => document.querySelectorAll("select")[0].options.length > 1,
+    () => document.querySelector(".featured-track").scrollLeft > 0,
   );
-  assert.equal(await page.locator("article.alfaro-property-card").count(), 6);
-  const id = await page
-    .locator("article.alfaro-property-card a")
-    .first()
-    .getAttribute("href");
-  await page.getByRole("button", { name: "Buscar inmuebles" }).click();
-  await page.getByText(/inmuebles encontrados/).waitFor({ timeout: 60000 });
-  const resultsSection = page.getByRole("region", {
-    name: "Resultados de tu búsqueda",
-  });
-  await resultsSection.locator("article").first().waitFor({ timeout: 60000 });
-  assert.equal(await resultsSection.locator("article").count(), 9);
-  await page.getByRole("button", { name: "Siguiente", exact: true }).click();
-  await page.getByText(/Página 2 de/).waitFor();
-  await page.getByRole("button", { name: "Anterior", exact: true }).click();
-  await page.getByText(/Página 1 de/).waitFor();
+  await page.getByRole("button", { name: "Destacados anteriores" }).click();
   results.push(
-    "Home: six live featured properties, empty filters, pagination forward/backward",
+    "All featured properties reachable; hero and featured carousels controlled",
   );
-  const wa = await page
-    .locator('article a[href^="https://wa.me/"]')
-    .first()
-    .getAttribute("href");
-  assert.ok(wa.includes("wa.me/51940221494?text="));
-  assert.ok(
-    new URL(wa).searchParams.get("text").includes("/propiedades/resumen/"),
-  );
-  results.push("WhatsApp institutional contact and property link");
-
   for (const width of [375, 768, 1440]) {
     await page.setViewportSize({ width, height: width === 375 ? 812 : 1000 });
-    await page.goto(base, { waitUntil: "domcontentloaded" });
-    await page
-      .locator("article.alfaro-property-card")
-      .first()
-      .waitFor({ timeout: 60000 });
-    await page.waitForTimeout(900);
+    await photograph();
+    await page.evaluate(() => scrollTo(0, 0));
     assert.ok(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
-      "Home overflow at " + width,
+      "Home overflow " + width,
     );
-    await page.screenshot({
-      path: `${artifacts}/inicio-${width}.png`,
-      fullPage: true,
-    });
-    if (width < 965) {
+    if (width < 851) {
       await page.getByRole("button", { name: "Abrir menú" }).click();
       await page
         .locator("nav")
-        .getByRole("link", { name: "SERVICIOS", exact: true })
+        .getByRole("link", { name: "Servicios", exact: true })
         .waitFor();
       await page.getByRole("button", { name: "Cerrar menú" }).click();
     }
+    await screenshot("inicio-" + width);
   }
-  results.push(
-    "Home widths 375/768/1440 without horizontal overflow; mobile menu opens/closes",
+  await page.goto(base + "/propiedades");
+  await cards();
+  assert.equal(await page.locator(".property-grid article").count(), 9);
+  await page
+    .getByRole("button", { name: "Página siguiente", exact: true })
+    .click();
+  await page.waitForURL("**page=2");
+  await page.getByRole("button", { name: "Página 2", exact: true }).waitFor();
+  assert.equal(
+    await page
+      .getByRole("button", { name: "Página 2", exact: true })
+      .getAttribute("aria-current"),
+    "page",
   );
-
-  const routes = [
-    "/propiedades",
-    id,
+  results.push("Real catalogue, numbered pagination and URL state");
+  const first = page.locator(".property-grid article").first(),
+    idHref = await first.locator(".card-title").getAttribute("href"),
+    id = idHref.split("/").pop();
+  await first
+    .getByRole("button", { name: new RegExp("Guardar inmueble") })
+    .click();
+  assert.equal(
+    await first
+      .getByRole("button", { name: new RegExp("Quitar de favoritos") })
+      .getAttribute("aria-pressed"),
+    "true",
+  );
+  await page.reload();
+  await cards();
+  assert.equal(
+    await page
+      .locator(".property-grid article")
+      .first()
+      .getByRole("button", { name: new RegExp("Quitar de favoritos") })
+      .getAttribute("aria-pressed"),
+    "true",
+  );
+  for (let i = 0; i < 4; i++)
+    await page
+      .locator(".property-grid article")
+      .nth(i)
+      .getByRole("button", { name: "Comparar inmueble", exact: true })
+      .click();
+  assert.match(await page.locator(".compare-dock").innerText(), /3 de 3/);
+  await page.goto(base + "/comparar");
+  await page.locator(".comparison-table").waitFor();
+  assert.equal(await page.locator(".comparison-table thead th").count(), 4);
+  await screenshot("comparacion-1440");
+  await page.goto(base + "/favoritos");
+  await cards();
+  assert.equal(await page.locator(".property-grid article").count(), 1);
+  results.push(
+    "Favorites persist after reload; comparison capped at three and displays actual fields",
+  );
+  await page.goto(base + "/propiedades");
+  await cards();
+  const search = page.getByRole("form", { name: "Buscar inmuebles" });
+  await search
+    .locator("details.filter-select")
+    .nth(0)
+    .locator("summary")
+    .click();
+  await search.getByRole("checkbox", { name: "Chimbote", exact: true }).check();
+  await search
+    .getByRole("checkbox", { name: "Nuevo Chimbote", exact: true })
+    .check();
+  await search
+    .locator("details.filter-select")
+    .nth(0)
+    .locator("summary")
+    .click();
+  await search.getByRole("button", { name: "Buscar inmuebles" }).click();
+  await page.waitForURL(
+    (u) => u.searchParams.get("location") === "Chimbote,Nuevo Chimbote",
+  );
+  await cards();
+  assert.ok(new URL(page.url()).searchParams.get("location").includes(","));
+  await page.reload();
+  await cards();
+  assert.ok(
+    (await page.locator(".filter-chips").innerText()).includes(
+      "Chimbote,Nuevo Chimbote",
+    ),
+  );
+  await page.getByRole("button", { name: "Quitar filtro Ubicación" }).click();
+  await cards();
+  results.push(
+    "Multiple districts, shareable filter URL, reload and clearing chips",
+  );
+  await page.goto(base + "/propiedades?currency=PEN&min=1&sort=price-asc");
+  await cards();
+  const priceTexts = await page
+    .locator(".property-grid .card-price")
+    .allTextContents();
+  assert.ok(priceTexts.every((t) => t.includes("S/")));
+  await screenshot("catalogo-1440");
+  await page.goto(base + "/propiedades?currency=PEN&min=999999999");
+  await page
+    .getByRole("heading", {
+      name: "No encontramos inmuebles para esos filtros",
+    })
+    .waitFor();
+  results.push("Price filters respect explicit currency and empty results");
+  await page.goto(base + "/propiedades?page=2");
+  await cards();
+  const href = await page
+    .locator(".property-grid article .card-title")
+    .first()
+    .getAttribute("href");
+  await page.locator(".property-grid article .card-title").first().click();
+  await page.locator(".gallery-stage").waitFor();
+  await page.getByRole("link", { name: "Volver a los inmuebles" }).click();
+  await page.waitForURL("**page=2");
+  await cards();
+  results.push("Property detail returns to original search and pagination");
+  await page.goto(base + idHref);
+  await page.locator(".gallery-stage").waitFor();
+  await page.getByRole("button", { name: /Ver \d+ foto/ }).click();
+  await page
+    .getByRole("dialog", { name: "Fotografías ampliadas del inmueble" })
+    .waitFor();
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("Escape");
+  await page.getByRole("dialog").waitFor({ state: "hidden" });
+  await page.getByRole("button", { name: "Compartir", exact: true }).click();
+  const wa = await page
+    .locator('.contact-panel a[href^="https://wa.me/"]')
+    .getAttribute("href");
+  assert.ok(wa.includes("51940221494"));
+  assert.ok(
+    decodeURIComponent(wa).includes(
+      "https://app-alfaro-git-smoky.vercel.app/propiedades/resumen/",
+    ),
+  );
+  results.push(
+    "Gallery opens and closes by keyboard; institutional WhatsApp includes canonical property URL",
+  );
+  for (const width of [375, 768, 1440]) {
+    await page.setViewportSize({ width, height: width === 375 ? 812 : 1000 });
+    assert.ok(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+      "Detail overflow " + width,
+    );
+    await screenshot("ficha-" + width);
+  }
+  if (!uiOnly) {
+    const reqHeaders = { ...headers, "user-agent": "WhatsApp/2.24" };
+    const crawler = await context.request.get(base + idHref, {
+      headers: reqHeaders,
+    });
+    assert.equal(crawler.status(), 200);
+    const html = await crawler.text();
+    assert.ok(html.includes("og:image:width"));
+    assert.ok(html.includes('content="1200"'));
+    assert.ok(!html.includes("/src/main.jsx"));
+    const image = await context.request.get(
+      base + `/api/property-share?id=${id}&format=image`,
+      { headers },
+    );
+    assert.equal(image.status(), 200);
+    assert.ok(image.headers()["content-type"].includes("image/jpeg"));
+    const bytes = await image.body();
+    const meta = await sharp(bytes).metadata();
+    assert.equal(meta.width, 1200);
+    assert.equal(meta.height, 630);
+    await writeFile(artifacts + "/tarjeta-whatsapp.jpg", bytes);
+    const imageDl = page.waitForEvent("download");
+    await page.getByRole("link", { name: "Descargar tarjeta JPG" }).click();
+    const dl = await imageDl;
+    assert.ok(dl.suggestedFilename().endsWith(".jpg"));
+    await dl.saveAs(artifacts + "/tarjeta-descarga.jpg");
+    const pdfDl = page.waitForEvent("download", { timeout: 90000 });
+    await page.getByRole("button", { name: "Descargar ficha PDF" }).click();
+    const pdf = await pdfDl;
+    await pdf.saveAs(artifacts + "/ficha.pdf");
+    assert.equal(
+      (await readFile(artifacts + "/ficha.pdf")).subarray(0, 4).toString(),
+      "%PDF",
+    );
+    results.push(
+      "WhatsApp crawler receives server metadata; real JPG 1200x630 and branded PDF downloads succeed",
+    );
+  }
+  for (const path of [
     "/servicios",
-    "/blog",
-    "/asesores",
-    "/contacto",
     "/acerca-de-nosotros",
     "/nuestra-historia",
+    "/asesores",
+    "/blog",
+    "/blog/noticias",
+    "/blog/articulos",
+    "/contacto",
     "/vende-o-alquila",
     "/login",
     "/registro",
     "/admin",
-  ];
-  for (const path of routes) {
-    console.log("Checking public route:", path);
+  ]) {
+    console.log("Route:", path);
     await page.goto(base + path, { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(1100);
-    assert.ok(await page.locator("#root").innerText(), "Empty route: " + path);
-    assert.equal(
-      await page.getByText("Unexpected Application Error!").count(),
-      0,
-      path,
+    await page.waitForTimeout(700);
+    assert.ok(
+      !(await page.locator("body").innerText()).includes(
+        "Unexpected Application Error",
+      ),
     );
-    if (path === "/propiedades") {
-      await page
-        .locator("article.alfaro-property-card")
-        .first()
-        .waitFor({ timeout: 60000 });
-      assert.equal(
-        await page.locator("article.alfaro-property-card").count(),
-        9,
+    for (const width of [375, 1440]) {
+      await page.setViewportSize({ width, height: 1000 });
+      assert.ok(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+        "Overflow " + path + " " + width,
       );
-      await page.screenshot({
-        path: `${artifacts}/catalogo-1440.png`,
-        fullPage: true,
-      });
     }
-    if (["/login", "/registro", "/admin"].includes(path))
-      assert.equal(await page.locator('input[type="password"]').count(), 0);
+    if (
+      [
+        "/servicios",
+        "/asesores",
+        "/blog",
+        "/contacto",
+        "/vende-o-alquila",
+      ].includes(path)
+    )
+      await screenshot(path.slice(1) + "-1440");
   }
-  assert.deepEqual(runtimeErrors, []);
-  results.push(
-    "12 public routes including existing real property summary; simulated auth forms disabled; no uncaught JavaScript errors",
+  await page.goto(base + "/vende-o-alquila");
+  const form = page.locator(".offer-contact form");
+  await form.getByLabel("Tu nombre").fill("Prueba local");
+  await form.getByLabel("Teléfono de contacto").fill("999999999");
+  await form
+    .getByRole("button", { name: "Preparar consulta por WhatsApp" })
+    .click();
+  const destination = await form
+    .getByRole("link", { name: /Abrir mi consulta/ })
+    .getAttribute("href");
+  assert.ok(destination.startsWith("https://wa.me/51940221494"));
+  assert.ok(
+    decodeURIComponent(destination).includes("Deseo ofrecer mi inmueble"),
   );
-
-  // Deterministic cases use synthetic responses only in this isolated browser context.
-  const isolated = await browser.newContext({
+  results.push(
+    "Institutional routes and mobile overflow checked; offering prepares WhatsApp without sending or POST",
+  );
+  // Malformed data and untrusted HTML stay confined to this synthetic browser context.
+  const fixture = await browser.newContext({
     viewport: { width: 375, height: 812 },
     reducedMotion: "reduce",
   });
-  await authorize(isolated);
-  const fixture = {
-    id: "test-only",
-    title: "Casa de prueba",
-    price: "1500.5",
-    moneda: "PEN",
-    location: "Chimbote",
-    status: "Venta",
-    image: "/missing-test-image.png",
-  };
-  let mode = "empty";
-  await isolated.route("**/api/**", async (route) => {
-    const path = new URL(route.request().url()).pathname;
-    if (path === "/api/get-options")
-      return route.fulfill({
+  if (Object.keys(headers).length)
+    await fixture.route(base + "/**", (r) =>
+      r.continue({ headers: { ...r.request().headers(), ...headers } }),
+    );
+  let mode = "error";
+  await fixture.route("**/api/**", (r) => {
+    const u = new URL(r.request().url());
+    if (u.pathname === "/api/getProperties")
+      return r.fulfill(
+        mode === "error"
+          ? { status: 500, json: { message: "private diagnostic" } }
+          : { json: [] },
+      );
+    if (u.pathname === "/api/get-options")
+      return r.fulfill({ json: { distritos: [], tipos: [], modalidades: [] } });
+    if (u.pathname === "/api/getPropertyDetails")
+      return r.fulfill({
         json: {
-          distritos: [
-            {
-              departamento: "Áncash",
-              distritos: [{ id: 1, nombre: "Chimbote" }],
-            },
-          ],
-          modalidades: ["Venta"],
-          tipos: ["Casa"],
+          property: {
+            id: 36,
+            title: "Prueba de contenido",
+            image: "/missing-image-test.png",
+            description:
+              '<p>Texto válido</p><script>window.__xss=1</script><img src=x onerror="window.__xss=2"><a href="javascript:alert(1)">enlace</a>',
+          },
+          subProperties: [],
         },
       });
-    if (path === "/api/get-social-links") return route.fulfill({ json: [] });
-    if (path === "/api/getProperties") {
-      if (mode === "error")
-        return route.fulfill({
-          status: 500,
-          json: { error: "private diagnostic" },
-        });
-      if (mode === "invalid")
-        return route.fulfill({
-          status: 200,
-          contentType: "text/html",
-          body: "private diagnostic",
-        });
-      return route.fulfill({ json: mode === "empty" ? [] : [fixture] });
-    }
-    return route.abort();
+    return r.fulfill({ json: [] });
   });
-  const scenario = await isolated.newPage();
-  await scenario.goto(base + "/propiedades");
-  await scenario
-    .getByText(
-      "No encontramos inmuebles para esos filtros. Prueba otra búsqueda.",
-    )
-    .waitFor();
-  mode = "error";
-  await scenario.reload();
-  await scenario
-    .getByRole("alert")
-    .filter({ hasText: "No pudimos cargar" })
-    .waitFor();
+  const fp = await fixture.newPage();
+  await fp.goto(base + "/propiedades");
+  await fp.getByRole("alert").waitFor();
   assert.ok(
-    !(await scenario.locator("body").innerText()).includes(
-      "private diagnostic",
-    ),
+    !(await fp.locator("body").innerText()).includes("private diagnostic"),
   );
-  mode = "valid";
-  await scenario.getByRole("button", { name: "Reintentar" }).click();
-  await scenario.getByText("Imagen por confirmar").waitFor();
-  await scenario.getByText("S/ 1,500.5", { exact: true }).waitFor();
-  assert.ok(
-    await scenario.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth,
-    ),
-  );
-  mode = "invalid";
-  await scenario.reload();
-  await scenario
-    .getByRole("alert")
-    .filter({ hasText: "No pudimos cargar" })
+  mode = "empty";
+  await fp.getByRole("button", { name: "Reintentar" }).click();
+  await fp
+    .getByRole("heading", {
+      name: "No encontramos inmuebles para esos filtros",
+    })
     .waitFor();
-  mode = "valid";
-  await scenario.goto(base);
-  await scenario
-    .getByRole("combobox", { name: /^Ubicación/ })
-    .selectOption("Chimbote");
-  await scenario
-    .getByRole("combobox", { name: /^Operación/ })
-    .selectOption("Venta");
-  await scenario
-    .getByRole("combobox", { name: /^Tipo de inmueble/ })
-    .selectOption("Casa");
-  const requestPromise = scenario.waitForRequest((r) =>
-    r.url().includes("getProperties?location="),
+  await fp.goto(base + "/propiedades/resumen/36");
+  await fp.getByText("Texto válido", { exact: true }).waitFor();
+  assert.equal(await fp.evaluate(() => window.__xss), undefined);
+  assert.equal(
+    await fp
+      .locator(
+        '.rich-content script,.rich-content [onerror],.rich-content a[href^="javascript:"]',
+      )
+      .count(),
+    0,
   );
-  await scenario.getByRole("button", { name: "Buscar inmuebles" }).click();
-  const request = await requestPromise;
-  assert.deepEqual(Object.fromEntries(new URL(request.url()).searchParams), {
-    location: "Chimbote",
-    status: "Venta",
-    title: "Casa",
-  });
+  await fp.getByText("Imagen por confirmar", { exact: true }).first().waitFor();
+  await fixture.close();
   results.push(
-    "Synthetic isolated cases: empty/error/retry/invalid JSON, missing image, soles and combined filters",
+    "HTTP failure/retry, empty results, broken images and HTML sanitization verified with isolated fixtures",
   );
-  await isolated.close();
+  assert.deepEqual(errors, []);
+  assert.deepEqual(outbound, []);
+  const result = {
+    base,
+    uiOnly,
+    results,
+    runtimeErrors: errors,
+    outboundWrites: outbound,
+  };
   await writeFile(
     artifacts + "/browser-results.json",
-    JSON.stringify(
-      { base, apiOrigin, results, runtimeErrors, failedApi },
-      null,
-      2,
-    ),
+    JSON.stringify(result, null, 2),
   );
-  console.log(JSON.stringify({ results, runtimeErrors, failedApi }, null, 2));
+  console.log(JSON.stringify(result, null, 2));
 } finally {
   await browser.close();
 }

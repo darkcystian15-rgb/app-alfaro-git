@@ -1,72 +1,53 @@
-import React, { useEffect, useState } from "react";
-import { FaFacebookF, FaInstagram, FaTiktok, FaWhatsapp } from "react-icons/fa";
-
-const iconMap = {
-  facebook: <FaFacebookF className="social-icon" />,
-  instagram: <FaInstagram className="social-icon" />,
-  tiktok: <FaTiktok className="social-icon" />,
-  whatsapp: <FaWhatsapp className="social-icon" />,
-};
-
-const SocialMediaSection = () => {
-  const [visibleLinks, setVisibleLinks] = useState([]);
-
+import { useEffect, useState } from "react";
+import { ArrowUpRight } from "lucide-react";
+export default function SocialMediaCallToAction() {
+  const [links, setLinks] = useState([]);
   useEffect(() => {
-    fetch("/api/get-social-links")
-      .then((res) => res.json())
-      .then((data) => {
-        data.forEach((item, i) => {
-          setTimeout(() => {
-            setVisibleLinks((prev) => [...prev, item]);
-          }, i * 200); // 200ms entre cada tarjeta
-        });
+    const c = new AbortController();
+    fetch("/api/get-social-links", { signal: c.signal })
+      .then((r) => {
+        if (!r.ok) throw Error();
+        return r.json();
       })
-      .catch((err) => console.error("Error cargando redes:", err));
+      .then((data) => {
+        if (!Array.isArray(data)) return;
+        setLinks(
+          data.filter((item) => {
+            try {
+              const u = new URL(item.enlace);
+              return /^https?:$/.test(u.protocol) && !u.username && !u.password;
+            } catch {
+              return false;
+            }
+          }),
+        );
+      })
+      .catch(() => {});
+    return () => c.abort();
   }, []);
-
-  const isHex = (color) => /^#([0-9A-F]{3}){1,2}$/i.test(color);
-  const isGradient = (color) =>
-    color.toLowerCase().startsWith("linear-gradient");
-
+  if (!links.length) return null;
   return (
-<section className="py-8 px-4 bg-white flex flex-col items-center">
-  <img
-    src="/subtitulos/siguenos_redes.png"
-    alt="Síguenos en nuestras redes"
-    className="w-[30rem] mx-auto object-contain mb-8"
-    loading="lazy"
-  />
-      
- <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-4xl w-full">
-        {visibleLinks.map((social, index) => {
-          const colorValue = social.color_fondo || "";
-          const useClass = !isHex(colorValue) && !isGradient(colorValue);
-          const useStyle = isHex(colorValue)
-            ? { backgroundColor: colorValue }
-            : isGradient(colorValue)
-            ? { background: colorValue }
-            : {};
-
-          return (
-            <a
-              key={index}
-              href={social.enlace}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`social-card flex flex-col items-center justify-center fog-breathe !text-white ${
-                useClass ? colorValue : ""
-              }`}
-              style={useStyle}
-            >
-              {iconMap[social.icono] || null}
-              <p className="social-text ">{social.nombre}</p>
-            </a>
-          );
-        })}
+    <section
+      className="social-strip shell"
+      aria-label="Redes sociales de Alfaro"
+    >
+      <div>
+        <span className="eyebrow">SIGAMOS CONECTADOS</span>
+        <p>Más espacios. Más historias.</p>
+      </div>
+      <div>
+        {links.map((item, i) => (
+          <a
+            key={item.id || i}
+            href={item.enlace}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {item.nombre}
+            <ArrowUpRight size={16} />
+          </a>
+        ))}
       </div>
     </section>
   );
-};
-
-export default SocialMediaSection;
-
+}

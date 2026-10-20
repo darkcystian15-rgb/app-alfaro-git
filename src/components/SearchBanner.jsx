@@ -1,23 +1,123 @@
-import React, { useEffect, useState } from "react";
-import { Search, MapPin } from "lucide-react";
-export default function SearchBanner({ onSearch }) {
-  const [options, setOptions] = useState({
-    distritos: [],
-    modalidades: [],
-    tipos: [],
-  });
-  const [filters, setFilters] = useState({
-    location: "",
-    status: "",
-    title: "",
-  });
-  const [loading, setLoading] = useState(true),
-    [error, setError] = useState("");
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Search,
+  MapPin,
+  SlidersHorizontal,
+  ChevronDown,
+  X,
+} from "lucide-react";
+import { filterParams, valuesOf } from "../services/catalog-model";
+import toast from "react-hot-toast";
+function MultiFilter({ label, groups, value, onChange, placeholder }) {
+  const [query, setQuery] = useState(""),
+    ref = useRef(null),
+    selected = valuesOf(value);
+  useEffect(() => {
+    const close = (e) => {
+      if (
+        e.key === "Escape" ||
+        (e.type === "pointerdown" && !ref.current?.contains(e.target))
+      )
+        ref.current?.removeAttribute("open");
+    };
+    document.addEventListener("pointerdown", close);
+    document.addEventListener("keydown", close);
+    return () => {
+      document.removeEventListener("pointerdown", close);
+      document.removeEventListener("keydown", close);
+    };
+  }, []);
+  return (
+    <details className="filter-select" ref={ref}>
+      <summary>
+        <span className="filter-label">{label}</span>
+        <span className="filter-value">
+          {selected.length
+            ? selected.length > 1
+              ? `${selected.length} seleccionados`
+              : selected[0]
+            : placeholder}
+          <ChevronDown size={15} />
+        </span>
+      </summary>
+      <div className="filter-popover">
+        <label className="filter-search">
+          <Search size={15} />
+          <input
+            type="search"
+            placeholder={`Buscar ${label.toLowerCase()}`}
+            aria-label={`Buscar ${label.toLowerCase()}`}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </label>
+        <button
+          type="button"
+          className="text-action"
+          onClick={() => onChange("")}
+        >
+          Todas las opciones
+        </button>
+        <div className="filter-options">
+          {groups.map((group) => {
+            const list = group.items.filter((v) =>
+              v.toLowerCase().includes(query.toLowerCase()),
+            );
+            return (
+              list.length > 0 && (
+                <fieldset key={group.name}>
+                  <legend>{group.name}</legend>
+                  {list.map((option) => (
+                    <label key={option}>
+                      <input
+                        type="checkbox"
+                        checked={selected.includes(option)}
+                        onChange={() =>
+                          onChange(
+                            (selected.includes(option)
+                              ? selected.filter((x) => x !== option)
+                              : [...selected, option]
+                            ).join(","),
+                          )
+                        }
+                      />
+                      <span>{option}</span>
+                    </label>
+                  ))}
+                </fieldset>
+              )
+            );
+          })}
+          {!groups.some((g) =>
+            g.items.some((v) => v.toLowerCase().includes(query.toLowerCase())),
+          ) && <p>Sin opciones coincidentes.</p>}
+        </div>
+      </div>
+    </details>
+  );
+}
+export default function SearchBanner({
+  initialFilters = {},
+  compact = false,
+  onSearch,
+}) {
+  const navigate = useNavigate(),
+    [options, setOptions] = useState({
+      distritos: [],
+      modalidades: [],
+      tipos: [],
+    }),
+    [loading, setLoading] = useState(true),
+    [error, setError] = useState(""),
+    [filters, setFilters] = useState(initialFilters),
+    key = JSON.stringify(initialFilters);
+  useEffect(() => setFilters(JSON.parse(key)), [key]);
   useEffect(() => {
     const c = new AbortController();
     fetch("/api/get-options", { signal: c.signal })
       .then((r) => {
-        if (!r.ok) throw new Error("No se pudieron cargar los filtros");
+        if (!r.ok) throw Error();
         return r.json();
       })
       .then((d) => {
@@ -26,25 +126,16 @@ export default function SearchBanner({ onSearch }) {
           !Array.isArray(d.distritos) ||
           !Array.isArray(d.modalidades) ||
           !Array.isArray(d.tipos) ||
-          d.distritos.some(
-            (group) =>
-              !group ||
-              !Array.isArray(group.distritos) ||
-              group.distritos.some(
-                (district) => !district || typeof district.nombre !== "string",
-              ),
-          ) ||
-          [...d.modalidades, ...d.tipos].some(
-            (value) => typeof value !== "string",
-          )
-        ) {
-          throw new Error("Invalid search options");
-        }
+          d.distritos.some((g) => !g || !Array.isArray(g.distritos))
+        )
+          throw Error();
         if (!c.signal.aborted) setOptions(d);
       })
       .catch((e) => {
         if (e.name !== "AbortError")
-          setError("No pudimos cargar las opciones de búsqueda");
+          setError(
+            "Las opciones no están disponibles. Puedes buscar sin filtros.",
+          );
       })
       .finally(() => {
         if (!c.signal.aborted) setLoading(false);
@@ -52,112 +143,158 @@ export default function SearchBanner({ onSearch }) {
     return () => c.abort();
   }, []);
   const update = (name, value) =>
-    setFilters((prev) => ({ ...prev, [name]: value }));
+    setFilters((prev) => ({
+      ...prev,
+      [name]: value,
+      ...(name === "currency" && !value ? { min: "", max: "" } : {}),
+    }));
+  const submit = (e) => {
+    e.preventDefault();
+    if (
+      (filters.min &&
+        filters.max &&
+        Number(filters.min) > Number(filters.max)) ||
+      (filters.areaMin &&
+        filters.areaMax &&
+        Number(filters.areaMin) > Number(filters.areaMax))
+    ) {
+      toast.error("El mínimo no puede superar al máximo.");
+      return;
+    }
+    if (onSearch) onSearch(filters);
+    else navigate("/propiedades?" + filterParams(filters));
+  };
   return (
-    <section
-      className="relative isolate flex min-h-[460px] items-center overflow-hidden bg-[#152337] px-4 py-20 text-white sm:min-h-[520px]"
-      aria-labelledby="hero-title"
+    <form
+      className={"property-search " + (compact ? "search-compact" : "")}
+      onSubmit={submit}
+      aria-label="Buscar inmuebles"
     >
-      <div
-        className="absolute inset-0 -z-10 bg-cover bg-center opacity-35"
-        style={{ backgroundImage: "url('/IMG2.png')" }}
-        aria-hidden="true"
-      />
-      <div
-        className="absolute inset-0 -z-10 bg-gradient-to-r from-[#111b2c] via-[#142136]/85 to-[#142136]/25"
-        aria-hidden="true"
-      />
-      <div className="mx-auto w-full max-w-6xl">
-        <p className="mb-4 text-sm font-bold uppercase tracking-[.2em] text-red-200">
-          Inmobiliaria Alberto Alfaro
-        </p>
-        <h1
-          id="hero-title"
-          className="max-w-3xl text-4xl font-extrabold leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl"
-        >
-          Un lugar para cada etapa de tu vida
-        </h1>
-        <p className="mt-5 max-w-2xl text-base text-slate-100 sm:text-lg">
-          Encuentra propiedades en venta o alquiler con asesoría inmobiliaria
-          personalizada.
-        </p>
-        <form
-          className="mt-9 grid gap-3 rounded-2xl border border-white/20 bg-white p-4 text-slate-800 shadow-2xl sm:grid-cols-2 lg:grid-cols-4 lg:p-5"
-          onSubmit={(e) => {
-            e.preventDefault();
-            onSearch(filters);
-          }}
-        >
-          <label className="flex flex-col gap-1 text-sm font-semibold">
-            Ubicación
-            <select
-              value={filters.location}
-              onChange={(e) => update("location", e.target.value)}
-              className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 text-slate-700"
-            >
-              <option value="">Todas las ubicaciones</option>
-              {options.distritos
-                .flatMap((group) => group.distritos || [])
-                .map((d) => (
-                  <option key={d.id} value={d.nombre}>
-                    {d.nombre}
-                  </option>
-                ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1 text-sm font-semibold">
-            Operación
-            <select
-              value={filters.status}
-              onChange={(e) => update("status", e.target.value)}
-              className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 text-slate-700"
-            >
-              <option value="">Venta y alquiler</option>
-              {options.modalidades.map((v) => (
-                <option key={v} value={v}>
-                  {v}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1 text-sm font-semibold">
-            Tipo de inmueble
-            <select
-              value={filters.title}
-              onChange={(e) => update("title", e.target.value)}
-              className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 text-slate-700"
-            >
-              <option value="">Todos los tipos</option>
-              {options.tipos.map((v) => (
-                <option key={v} value={v}>
-                  {v}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button
-            type="submit"
-            className="mt-5 flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#b7192a] px-6 font-bold text-white transition-colors hover:bg-[#961222]"
-          >
-            <Search size={18} />
-            Buscar inmuebles
-          </button>
-          {loading && (
-            <p className="col-span-full text-xs text-slate-500" role="status">
-              Cargando opciones de búsqueda…
-            </p>
-          )}
-          {error && (
-            <p className="col-span-full text-xs text-red-700" role="status">
-              {error}. Puedes buscar sin filtros mientras tanto.
-            </p>
-          )}
-        </form>
-        <p className="mt-4 flex items-center gap-2 text-sm text-slate-100">
-          <MapPin size={16} /> Chimbote · Nuevo Chimbote · Casma y más
-          ubicaciones
-        </p>
+      <div className="search-main">
+        <MultiFilter
+          label="Ubicación"
+          placeholder="¿Dónde quieres buscar?"
+          value={filters.location}
+          onChange={(v) => update("location", v)}
+          groups={options.distritos.map((g) => ({
+            name: g.departamento || "Ubicaciones",
+            items: g.distritos
+              .map((d) => d.nombre)
+              .filter((v) => typeof v === "string"),
+          }))}
+        />
+        <MultiFilter
+          label="Operación"
+          placeholder="Venta y alquiler"
+          value={filters.status}
+          onChange={(v) => update("status", v)}
+          groups={[
+            {
+              name: "Elige una o varias",
+              items: options.modalidades.filter((v) => typeof v === "string"),
+            },
+          ]}
+        />
+        <MultiFilter
+          label="Tipo de inmueble"
+          placeholder="Todos los tipos"
+          value={filters.title}
+          onChange={(v) => update("title", v)}
+          groups={[
+            {
+              name: "Elige uno o varios",
+              items: options.tipos.filter((v) => typeof v === "string"),
+            },
+          ]}
+        />
+        <button className="button button-red search-submit" type="submit">
+          <Search size={19} />
+          Buscar inmuebles
+        </button>
       </div>
-    </section>
+      <div className="search-bottom">
+        <span>
+          <MapPin size={13} />
+          {loading
+            ? "Cargando ubicaciones…"
+            : error || "Una ubicación o varias. Tú eliges."}
+        </span>
+        <details className="advanced-filters">
+          <summary>
+            <SlidersHorizontal size={15} /> Más filtros
+          </summary>
+          <div className="advanced-panel">
+            <label>
+              Moneda
+              <select
+                value={filters.currency || ""}
+                onChange={(e) => update("currency", e.target.value)}
+              >
+                <option value="">Todas las monedas</option>
+                <option value="USD">US$ · Dólares</option>
+                <option value="PEN">S/ · Soles</option>
+              </select>
+            </label>
+            <label>
+              Precio mínimo
+              <input
+                type="number"
+                min="0"
+                step="any"
+                placeholder="Desde"
+                value={filters.min || ""}
+                disabled={!filters.currency}
+                onChange={(e) => update("min", e.target.value)}
+              />
+            </label>
+            <label>
+              Precio máximo
+              <input
+                type="number"
+                min="0"
+                step="any"
+                placeholder="Hasta"
+                value={filters.max || ""}
+                disabled={!filters.currency}
+                onChange={(e) => update("max", e.target.value)}
+              />
+            </label>
+            <label>
+              Área mínima · m²
+              <input
+                type="number"
+                min="0"
+                step="any"
+                placeholder="Desde"
+                value={filters.areaMin || ""}
+                onChange={(e) => update("areaMin", e.target.value)}
+              />
+            </label>
+            <label>
+              Área máxima · m²
+              <input
+                type="number"
+                min="0"
+                step="any"
+                placeholder="Hasta"
+                value={filters.areaMax || ""}
+                onChange={(e) => update("areaMax", e.target.value)}
+              />
+            </label>
+            <p>
+              Selecciona una moneda para filtrar precios. No realizamos
+              conversiones.
+            </p>
+            <button
+              type="button"
+              className="text-action"
+              onClick={() => setFilters({})}
+            >
+              <X size={13} /> Limpiar todo
+            </button>
+          </div>
+        </details>
+      </div>
+    </form>
   );
 }

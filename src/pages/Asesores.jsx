@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { 
-  FaFacebookF, 
-  FaWhatsapp, 
-  FaUserTie, 
-  FaInstagram, 
-  FaTiktok, 
-  FaLinkedinIn 
+import {
+  FaFacebookF,
+  FaWhatsapp,
+  FaUserTie,
+  FaInstagram,
+  FaTiktok,
+  FaLinkedinIn,
 } from "react-icons/fa";
 import FloatingShare from "../components/FloatingShare";
 import { Helmet } from "react-helmet-async";
@@ -39,18 +39,21 @@ const Asesores = () => {
         />
 
         {/* 🔵 OPEN GRAPH (Facebook / WhatsApp / Messenger) */}
-        <meta property="og:title" content="Nuestro Equipo de Asesores – Inmobiliaria Alberto Alfaro" />
+        <meta
+          property="og:title"
+          content="Nuestro Equipo de Asesores – Inmobiliaria Alberto Alfaro"
+        />
         <meta
           property="og:description"
           content="Asesores profesionales listos para ayudarte a elegir la mejor propiedad o inversión inmobiliaria."
         />
         <meta
           property="og:image"
-          content="https://inmobiliariaalbertoalfaro.com.pe/og/logo_aa.png"
+          content="https://app-alfaro-git-smoky.vercel.app/og/portal-alfaro.jpg"
         />
         <meta
           property="og:url"
-          content="https://inmobiliariaalbertoalfaro.com.pe/asesores"
+          content="https://app-alfaro-git-smoky.vercel.app/asesores"
         />
         <meta property="og:type" content="website" />
 
@@ -58,7 +61,7 @@ const Asesores = () => {
         <meta name="twitter:card" content="summary_large_image" />
         <meta
           name="twitter:image"
-          content="https://inmobiliariaalbertoalfaro.com.pe/og/logo_aa.png"
+          content="https://app-alfaro-git-smoky.vercel.app/og/portal-alfaro.jpg"
         />
       </Helmet>
 
@@ -79,8 +82,8 @@ const Asesores = () => {
         </div>
 
         <p className="text-gray-600 text-lg text-center mb-12 max-w-3xl mx-auto">
-          Expertos en bienes raíces listos para guiarte en la compra o venta de tu
-          propiedad con la más alta calidad de servicio.
+          Expertos en bienes raíces listos para guiarte en la compra o venta de
+          tu propiedad con la más alta calidad de servicio.
         </p>
 
         {loading ? (

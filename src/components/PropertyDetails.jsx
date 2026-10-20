@@ -1,3 +1,4 @@
+import DOMPurify from "dompurify";
 // src/components/PropertyDetails.jsx
 import React from "react";
 
@@ -10,7 +11,15 @@ const PropertyDetails = ({ propData }) => {
       {propData.description && (
         <p className="mb-3 text-left">
           <strong>Descripción:</strong>
-          <div dangerouslySetInnerHTML={{ __html: propData.description }} />
+          <div
+            dangerouslySetInnerHTML={{
+              __html: DOMPurify.sanitize(String(propData.description || ""), {
+                USE_PROFILES: { html: true },
+                FORBID_TAGS: ["style", "form", "iframe"],
+                FORBID_ATTR: ["style"],
+              }),
+            }}
+          />
         </p>
       )}
       {propData.status && (
@@ -24,7 +33,10 @@ const PropertyDetails = ({ propData }) => {
         <div className="flex justify-center items-center gap-2 mb-2">
           <img src="/precio.png" alt="Precio" className="w-5 h-5" />
           <p className="font-semibold text-blue-600">
-            S/ {Number(propData.price).toLocaleString("es-PE", { minimumFractionDigits: 2 })}
+            S/{" "}
+            {Number(propData.price).toLocaleString("es-PE", {
+              minimumFractionDigits: 2,
+            })}
           </p>
         </div>
       )}
@@ -56,7 +68,11 @@ const PropertyDetails = ({ propData }) => {
               rel="noopener noreferrer"
               title="Ver en Google Maps"
             >
-              <img src="/maps.png" alt="Ver en Google Maps" className="w-5 h-5" />
+              <img
+                src="/maps.png"
+                alt="Ver en Google Maps"
+                className="w-5 h-5"
+              />
             </a>
           )}
         </div>

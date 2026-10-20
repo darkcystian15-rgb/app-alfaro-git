@@ -1,406 +1,177 @@
-import { useState, useEffect } from "react";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Pagination, Autoplay, Thumbs } from "swiper/modules";
-import { FiCamera, FiMenu } from "react-icons/fi";
-import { Home, MapPin, UserRound, Mail, BookOpen,Handshake } from "lucide-react";
-
-import "swiper/css";
-import "swiper/css/navigation";
-import "swiper/css/pagination";
-import "swiper/css/thumbs";
-
-import PropertyResumePageGallery from "../components/PropertyResumenPageGallery";
-
+import { useEffect, useRef, useState } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Expand,
+  X,
+  Image as ImageIcon,
+} from "lucide-react";
+import PropertyImage from "./PropertyImage";
+const video = (src) => /\.(mp4|mov|webm|ogg)(?:\?|$)/i.test(src || "");
 export default function PropertyGallery({ data }) {
-  const [images, setImages] = useState([]);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [galleryImages, setGalleryImages] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-const isVideo = (src) => /\.(mp4|mov|webm|ogg)$/i.test(src);
-
-  // Estado del menú lateral
-  const [sideMenuOpen, setSideMenuOpen] = useState(false);
-
-  // Helper robusto para obtener la URL de una "imagen" en distintas formas posibles
-  const resolveSrc = (maybe) => {
-    if (!maybe) return null;
-    if (typeof maybe === "string") {
-      const s = maybe.trim();
-      return s === "" ? null : s;
-    }
-    if (typeof maybe === "object") {
-      // busca propiedades comunes
-      const candidates = ["src", "url", "image", "thumbnail", "photo"];
-      for (const c of candidates) {
-        if (maybe[c] && typeof maybe[c] === "string" && maybe[c].trim() !== "") {
-          return maybe[c].trim();
-        }
-      }
-      // a veces la imagen puede estar dentro de un objeto nested { data: { url: ... } }
-      if (maybe.data && typeof maybe.data === "object") {
-        for (const c of ["src", "url", "image", "photo"]) {
-          if (maybe.data[c] && typeof maybe.data[c] === "string" && maybe.data[c].trim() !== "") {
-            return maybe.data[c].trim();
-          }
-        }
-      }
-    }
-    return null;
-  };
-
+  const photos = [
+    { src: data?.property?.image, title: data?.property?.title },
+    ...(data?.subProperties || []).map((s) => ({
+      src: s.image,
+      title: s.content,
+      description: s.text_content,
+    })),
+  ]
+    .filter(
+      (p, i, all) =>
+        p.src &&
+        typeof p.src === "string" &&
+        all.findIndex((x) => String(x.src || "").trim() === p.src.trim()) === i,
+    )
+    .map((p) => ({ ...p, src: p.src.trim() }));
+  const [current, setCurrent] = useState(0),
+    [lightbox, setLightbox] = useState(false),
+    dialog = useRef(null),
+    lastFocus = useRef(null);
+  const move = (n) =>
+      setCurrent((i) => (i + n + photos.length) % photos.length),
+    item = photos[current] || photos[0];
   useEffect(() => {
-    if (!data?.property) {
-      setImages([]);
-      setGalleryImages([]);
-      return;
+    setCurrent(0);
+  }, [data?.property?.id]);
+  useEffect(() => {
+    if (lightbox) {
+      lastFocus.current = document.activeElement;
+      dialog.current?.showModal();
+      const before = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = before;
+        lastFocus.current?.focus();
+      };
     }
-
-    // Construimos la lista priorizando la imagen principal en primer lugar
-    const mainSrc = resolveSrc(data.property.image) || resolveSrc(data.property.photo) || null;
-    const mainTitle = data.property.title || data.property.name || "";
-
-    // Mapear subpropiedades robustamente (podrían venir con estructuras diferentes)
-    const subs = (data.subProperties || []).map((sub) => {
-      // intenta extraer la imagen de diferentes campos
-      const src =
-        resolveSrc(sub.image) ||
-        resolveSrc(sub.photo) ||
-        resolveSrc(sub.src) ||
-        resolveSrc(sub.url) ||
-        null;
-
-      const title = sub.content || sub.title || sub.name || "Vista adicional";
-      const description = sub.text_content || sub.description || "";
-
-      return { src, title, description };
-    });
-
-    // Armamos array final: primero principal (si existe), luego subpropiedades filtradas
-    const combined = [
-      ...(mainSrc ? [{ src: mainSrc, title: mainTitle, description: "" }] : []),
-      ...subs,
-    ]
-      // filtrar nulos y strings vacíos
-      .filter((it) => it && it.src && typeof it.src === "string" && it.src.trim() !== "")
-      // eliminar duplicados por src manteniendo el primer encuentro
-      .reduce((acc, cur) => {
-        if (!acc.find((x) => x.src === cur.src)) acc.push(cur);
-        return acc;
-      }, []);
-
-    // Actualizamos estados: galleryImages (objetos) y images (solo src para Swiper)
-    setGalleryImages(combined);
-    setImages(combined.map((it) => it.src));
-  }, [data]);
-
-  if (!images.length) {
-    return (
-      <div className="p-6 text-center text-gray-500 border rounded-2xl bg-gray-50 font-sans">
-        No hay imágenes disponibles para esta propiedad.
-      </div>
+    dialog.current?.close();
+  }, [lightbox]);
+  if (!photos.length)
+    return <PropertyImage alt="Inmueble sin fotografía disponible" />;
+  const media = (expanded) =>
+    video(item.src) ? (
+      <video
+        src={item.src}
+        controls
+        playsInline
+        preload="metadata"
+        aria-label={item.title || "Video del inmueble"}
+      />
+    ) : (
+      <PropertyImage
+        src={item.src}
+        alt={item.title || "Fotografía del inmueble"}
+        eager
+        className={expanded ? "expanded-photo" : ""}
+      />
     );
-  }
-
   return (
-    <>
-      {/* GALERÍA PRINCIPAL */}
-      <div
-        className="
-          flex flex-col bg-gray-50 p-4 md:p-2
-          rounded-2xl shadow-md border border-gray-200
-          hover:shadow-lg transition-all duration-300
-          w-[98%] md:w-[98%] lg:w-[100%]
-          font-sans relative
-          mt-[-2rem]
-          left-1/2 -translate-x-1/2
-          h-[430px] md:h-[480px] lg:h-[530px]
-          overflow-hidden
-        "
-      >
-        {/* BOTÓN DEL MENÚ LATERAL (ahora arriba derecha) */}
+    <section className="property-gallery" aria-label="Galería del inmueble">
+      <div className="gallery-stage">
+        {media(false)}
         <button
-          onClick={() => setSideMenuOpen(true)}
-          className="
-            absolute top-5 right-5 z-30
-            flex items-center gap-2 bg-white/95 text-gray-800
-            py-2 px-4 rounded-full shadow-md hover:shadow-lg
-            transition-all duration-300 text-sm font-medium tracking-wide
-          "
+          className="gallery-expand button button-light"
+          onClick={() => setLightbox(true)}
         >
-          <FiMenu className="text-rojo-inmobiliario" />
-          
+          <Expand size={16} /> Ver {photos.length}{" "}
+          {photos.length === 1 ? "foto" : "fotos y videos"}
         </button>
-
-{/* Logo centrado superior del slider */}
-<img
-  src="/logo.png"
-  alt="logo"
-  onClick={() => (window.location.href = "/")}
-  className="
-    absolute top-5 left-1/2 -translate-x-1/2
-    w-48 md:w-52 h-auto
-
-    bg-white               /* Fondo blanco puro */
-    bg-opacity-100
-    rounded-2xl
-
-    cursor-pointer         /* 🔥 Ahora es clicable */
-    hover:scale-105        /* Hover premium */
-    transition-transform duration-300
-
-    z-[60]
-    animate-logoSoftDrop
-  "
-/>
-
-
-
-        {/* CARRUSEL PRINCIPAL */}
-        <div className="relative rounded-2xl overflow-hidden h-full">
-          <Swiper
-            modules={[Navigation, Pagination, Thumbs, Autoplay]}
-            navigation
-            pagination={{ clickable: true }}
-            autoplay={{ delay: 4000, disableOnInteraction: false }}
-            spaceBetween={10}
-            className="rounded-2xl overflow-hidden w-full h-full"
-            style={{
-              "--swiper-navigation-color": "#fff",
-              "--swiper-pagination-color": "#fff",
-            }}
-          >
-            {images.map((img, index) => (
-              <SwiperSlide key={index}>
-                <div
-                  className="relative w-full h-[410px] md:h-[460px] lg:h-[510px]
-                             overflow-hidden rounded-2xl bg-white flex items-center justify-center cursor-pointer"
-                  onClick={() => {
-                    setCurrentIndex(index);
-                    setLightboxOpen(true);
-                  }}
-                >
-                            {isVideo(img) ? (
-  <video
-    src={img}
-    className="object-cover w-full h-full"
-    autoPlay
-    muted
-    loop
-    playsInline
-    preload="metadata"
-    onClick={(e) => {
-      e.stopPropagation();
-      setCurrentIndex(index);
-      setLightboxOpen(true);
-    }}
-  />
-) : (
-  <img
-    src={img}
-    alt={`Imagen ${index + 1}`}
-    className="object-cover w-full h-full transition-transform duration-500 hover:scale-[1.02]"
-    loading="lazy"
-  />
-)}
-
-
-                  {/* GRADIENTE ELEGANTE */}
-                  <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/40 to-transparent pointer-events-none"></div>
-                </div>
-              </SwiperSlide>
-            ))}
-          </Swiper>
-
-          {/* BOTÓN VER FOTOS */}
+        {photos.length > 1 && (
+          <>
+            <button
+              className="gallery-arrow gallery-prev"
+              aria-label="Foto anterior"
+              onClick={() => move(-1)}
+            >
+              <ChevronLeft />
+            </button>
+            <button
+              className="gallery-arrow gallery-next"
+              aria-label="Foto siguiente"
+              onClick={() => move(1)}
+            >
+              <ChevronRight />
+            </button>
+          </>
+        )}
+      </div>
+      <div className="gallery-thumbnails" aria-label="Miniaturas del inmueble">
+        {photos.map((p, i) => (
           <button
-            onClick={() => setLightboxOpen(true)}
-            className="
-              absolute bottom-5 right-5 flex items-center gap-2
-              bg-white/95 text-gray-800 font-medium py-2 px-5
-              rounded-full shadow-lg hover:shadow-xl hover:bg-white
-              z-20 transition-all duration-300 text-sm tracking-wide
-            "
+            key={p.src}
+            aria-label={"Ver foto " + (i + 1)}
+            aria-pressed={i === current}
+            onClick={() => setCurrent(i)}
           >
-            <FiCamera className="text-rojo-inmobiliario" />
-            Ver fotos
+            {video(p.src) ? (
+              <span>▶ Video</span>
+            ) : (
+              <img
+                src={p.src}
+                alt=""
+                loading="lazy"
+                onError={(e) => {
+                  e.currentTarget.style.visibility = "hidden";
+                }}
+              />
+            )}
+          </button>
+        ))}
+        <span>
+          {current + 1} / {photos.length}
+        </span>
+      </div>
+      {item.description && (
+        <p className="gallery-caption">
+          {item.description.replace(/<[^>]*>/g, "")}
+        </p>
+      )}
+      <dialog
+        ref={dialog}
+        className="gallery-dialog"
+        aria-label="Fotografías ampliadas del inmueble"
+        onCancel={() => setLightbox(false)}
+        onClose={() => setLightbox(false)}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowLeft") move(-1);
+          if (e.key === "ArrowRight") move(1);
+        }}
+      >
+        <div className="lightbox-toolbar">
+          <span>
+            {current + 1} / {photos.length} · {item.title}
+          </span>
+          <button
+            className="icon-button"
+            aria-label="Cerrar galería"
+            onClick={() => setLightbox(false)}
+          >
+            <X />
           </button>
         </div>
-      </div>
-
-      {/* PANEL LATERAL (OFF-CANVAS) */}
-      {sideMenuOpen && (
-        <>
-          {/* Fondo oscuro clicable */}
-          <div
-            onClick={() => setSideMenuOpen(false)}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
-          ></div>
-
-          {/* Panel deslizante */}
-          <aside
-            className="
-              fixed top-0 right-0 h-full w-80 bg-white shadow-2xl z-50
-              p-6 flex flex-col gap-6 animate-slide-left
-            "
-            role="dialog"
-            aria-modal="true"
-            aria-label="Menú de opciones de la galería"
-          >
-            {/* Header del panel con logo */}
-            {/* Header del panel con logo */}
-<div className="flex flex-col items-center ">
-  {/* Logo */}
- <img
-  src="/logo.png"
-  alt="logo"
-  className="
-    absolute top-5 left-1/2 -translate-x-1/2
-    w-48 md:w-52 h-auto
-
-    bg-white               /* Fuerza blanco puro */
-    bg-white/100           /* Sin transparencia */
-    backdrop-blur-none     /* Evita glass o mezcla */
-    rounded-2xl
-
-    shadow-none            /* Sin sombras */
-    pointer-events-none
-    z-[60]
-
-    
-  "
-/>
-
-
-  <div className="flex w-full justify-between items-center">
-   
-    <button
-      onClick={() => setSideMenuOpen(false)}
-      aria-label="Cerrar panel"
-      className="text-gray-600 text-xl hover:text-black transition"
-    >
-      ✕
-    </button>
-  </div>
-</div>
-
-            {/* Sección de navegación principal */}
-            <nav className="flex flex-col gap-3 mt-8 ">
-              <a
-  href="/"
-  className="flex items-center gap-3 px-2 py-2 rounded-md text-gray-700 hover:bg-gray-50 transition no-underline hover:no-underline focus:no-underline active:no-underline"
->
-  <Home className="w-5 h-5 text-rojo-inmobiliario" />
-  Inicio
-</a>
-              <a
-                href="/vende-o-alquila"
-                className="flex items-center gap-3 px-2 py-2 rounded-md text-gray-700 hover:bg-gray-50 transition no-underline hover:no-underline focus:no-underline active:no-underline"
+        <div className="lightbox-media">
+          {media(true)}
+          {photos.length > 1 && (
+            <>
+              <button
+                className="gallery-arrow gallery-prev"
+                aria-label="Foto anterior ampliada"
+                onClick={() => move(-1)}
               >
-                <Handshake className="w-5 h-5 text-rojo-inmobiliario" />
-                Vende o Alquila con Nosotros
-              </a>
-
-              <a
-                href="/servicios"
-                className="flex items-center gap-3 px-2 py-2 rounded-md text-gray-700 hover:bg-gray-50 transition no-underline hover:no-underline focus:no-underline active:no-underline"
+                <ChevronLeft />
+              </button>
+              <button
+                className="gallery-arrow gallery-next"
+                aria-label="Foto siguiente ampliada"
+                onClick={() => move(1)}
               >
-                <MapPin className="w-5 h-5 text-rojo-inmobiliario" />
-                Servicios
-              </a>
-
-              {/* Grupo CONÓCENOS (sublinks) */}
-              <div className="mt-2 border-t pt-3 border-gray-100">
-                <div className="text-sm font-medium text-gray-500 uppercase mb-2">Conócenos</div>
-
-                <a
-                  href="/acerca-de-nosotros"
-                  className="flex items-center gap-3 px-2 py-2 rounded-md text-gray-700 hover:bg-gray-50 transition no-underline hover:no-underline focus:no-underline active:no-underline"
-                >
-                  <UserRound className="w-5 h-5 text-rojo-inmobiliario" />
-                  Acerca de Nosotros
-                </a>
-
-                <a
-                  href="/contacto"
-                  className="flex items-center gap-3 px-2 py-2 rounded-md text-gray-700 hover:bg-gray-50 transition no-underline hover:no-underline focus:no-underline active:no-underline"
-                >
-                  <Mail className="w-5 h-5 text-rojo-inmobiliario" />
-                  Contacto
-                </a>
-
-                <a
-                  href="/nuestra-historia"
-                  className="flex items-center gap-3 px-2 py-2 rounded-md text-gray-700 hover:bg-gray-50 transition no-underline hover:no-underline focus:no-underline active:no-underline"
-                >
-                  <BookOpen className="w-5 h-5 text-rojo-inmobiliario" />
-                  Nuestra Historia
-                </a>
-              </div>
-
-              <div className="mt-2 border-t pt-3 border-gray-100">
-
-              <a
-                href="/blog"
-                className="flex items-center gap-3 px-2 py-2 rounded-md text-gray-700 hover:bg-gray-50 transition no-underline hover:no-underline focus:no-underline active:no-underline"
-              >
-                <Home className="w-5 h-5 text-rojo-inmobiliario" />
-                Blog
-              </a>
-
-              <a
-                href="/asesores"
-                className="flex items-center gap-3 px-2 py-2 rounded-md text-gray-700 hover:bg-gray-50 transition no-underline hover:no-underline focus:no-underline active:no-underline"
-              >
-                <Home className="w-5 h-5 text-rojo-inmobiliario" />
-                Asesores
-              </a>
-
-              </div>
-            </nav>
-   
-          </aside>
-        </>
-      )}
-
-      {/* LIGHTBOX */}
-      {lightboxOpen && (
-        <PropertyResumePageGallery
-          images={galleryImages}
-          currentIndex={currentIndex}
-          onClose={() => setLightboxOpen(false)}
-        />
-      )}
-
-      {/* Animación personalizada */}
-      <style>{`
-        @keyframes slide-left {
-          from { transform: translateX(100%); }
-          to { transform: translateX(0); }
-        }
-        .animate-slide-left {
-          animation: slide-left 0.35s ease-out forwards;
-        }
-
-        @keyframes logoSoftDrop {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -18px);
-    filter: blur(6px);
-  }
-  60% {
-    opacity: 1;
-    filter: blur(0px);
-  }
-  100% {
-    transform: translate(-50%, 0);
-  }
-}
-
-.animate-logoSoftDrop {
-  animation: logoSoftDrop 0.7s ease-out forwards;
-}
-
-      `}</style>
-    </>
+                <ChevronRight />
+              </button>
+            </>
+          )}
+        </div>
+      </dialog>
+    </section>
   );
 }

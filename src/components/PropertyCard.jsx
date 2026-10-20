@@ -1,78 +1,110 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import { MapPin, ArrowUpRight, MessageCircle } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import {
+  MapPin,
+  ArrowUpRight,
+  MessageCircle,
+  Heart,
+  Scale,
+  Ruler,
+  BedDouble,
+  Bath,
+} from "lucide-react";
 import { contactUrl, formatPrice, propertyUrl } from "../config/site";
-
+import { usePortal } from "../context/PortalContext";
+import PropertyImage from "./PropertyImage";
 export default function PropertyCard({ property: item, ...legacyProps }) {
-  // Compatibilidad temporal con llamadas antiguas mediante props individuales.
-  const property = item || legacyProps;
-  const link = propertyUrl(property.id);
-  const [failedImage, setFailedImage] = useState(null);
-  const image = String(property.image || "").trim();
+  const p = item || legacyProps,
+    { favorites, compare, toggleFavorite, toggleCompare } = usePortal(),
+    location = useLocation();
+  const saved = favorites.includes(String(p.id)),
+    selected = compare.includes(String(p.id));
+  const state = {
+    from: location.pathname + location.search,
+    scroll: window.scrollY,
+  };
   return (
-    <article className="alfaro-property-card group flex h-full flex-col overflow-hidden rounded-2xl bg-white">
-      <Link
-        to={link}
-        aria-label={`Ver ${property.title || "inmueble"}`}
-        className="block overflow-hidden no-underline"
-      >
-        <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
-          {image && failedImage !== image ? (
-            <img
-              onError={() => setFailedImage(image)}
-              src={image}
-              alt={property.title || "Inmueble"}
-              loading="lazy"
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-slate-500">
-              Imagen por confirmar
-            </div>
+    <article className="property-card alfaro-property-card">
+      <div className="card-visual">
+        <Link
+          to={propertyUrl(p.id)}
+          state={state}
+          aria-label={"Ver " + p.title}
+        >
+          <PropertyImage src={p.image} alt={p.title} />
+        </Link>
+        <span className="operation-label">
+          {p.status || "Inmueble"}
+          {p.destacado === 1 || p.destacado === "1" ? <i>· Destacado</i> : null}
+        </span>
+        <button
+          type="button"
+          className={"save-button " + (saved ? "is-saved" : "")}
+          aria-pressed={saved}
+          aria-label={`${saved ? "Quitar de favoritos" : "Guardar inmueble"} ${p.id}`}
+          onClick={() => toggleFavorite(p.id)}
+        >
+          <Heart size={19} fill={saved ? "currentColor" : "none"} />
+        </button>
+      </div>
+      <div className="card-body">
+        <div className="card-price">
+          {formatPrice(p.price, p.moneda)}
+          <span>{/alquil/i.test(p.status || "") ? " / mes" : ""}</span>
+        </div>
+        <Link to={propertyUrl(p.id)} state={state} className="card-title">
+          {p.title || "Inmueble disponible"}
+        </Link>
+        <p className="card-address">{p.address || "Dirección por consultar"}</p>
+        <p className="card-location">
+          <MapPin size={14} />
+          {p.location || "Ubicación por confirmar"}
+        </p>
+        <div className="card-features">
+          {Number(p.area) > 0 && (
+            <span>
+              <Ruler size={15} />
+              {Number(p.area).toLocaleString("es-PE")} m²
+            </span>
           )}
-          {property.status && (
-            <span className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1 text-xs font-bold text-slate-800 shadow-sm">
-              {property.status}
+          {Number(p.bedrooms) > 0 && (
+            <span>
+              <BedDouble size={15} />
+              {p.bedrooms} dorm.
+            </span>
+          )}
+          {Number(p.bathrooms) > 0 && (
+            <span>
+              <Bath size={15} />
+              {p.bathrooms} baños
             </span>
           )}
         </div>
-      </Link>
-      <div className="flex flex-1 flex-col p-5">
-        <p className="text-xl font-extrabold tracking-tight text-[#b7192a]">
-          {formatPrice(property.price, property.moneda)}
-        </p>
-        <Link
-          to={link}
-          className="mt-2 text-lg font-semibold leading-snug text-slate-900 no-underline hover:text-[#b7192a]"
-        >
-          {property.title || "Inmueble disponible"}
-        </Link>
-        <p className="mt-2 flex items-start gap-1.5 text-sm text-slate-600">
-          <MapPin size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
-          {property.address || property.location || "Ubicación por confirmar"}
-        </p>
-        {property.area && Number(property.area) > 0 && (
-          <p className="mt-2 text-sm font-medium text-slate-500">
-            {Number(property.area).toLocaleString("es-PE")} m²
-          </p>
-        )}
-        <div className="mt-auto flex gap-2 pt-5">
+        <div className="card-actions">
           <Link
-            to={link}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#b7192a] px-3 py-3 text-sm font-bold text-white no-underline hover:bg-[#961222]"
+            className="button button-dark"
+            to={propertyUrl(p.id)}
+            state={state}
           >
-            Ver inmueble <ArrowUpRight size={16} />
+            Ver ficha <ArrowUpRight size={16} />
           </Link>
           <a
-            href={contactUrl(property)}
+            className="button button-outline"
+            href={contactUrl(p)}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label={`Consultar por WhatsApp sobre ${property.title || "el inmueble"}`}
-            className="flex items-center justify-center rounded-xl border border-slate-300 px-4 text-slate-700 hover:border-green-600 hover:text-green-700"
           >
-            <MessageCircle size={19} />
+            <MessageCircle size={16} /> Contactar
           </a>
         </div>
+        <button
+          type="button"
+          className={"compare-toggle " + (selected ? "is-selected" : "")}
+          aria-pressed={selected}
+          onClick={() => toggleCompare(p.id)}
+        >
+          <Scale size={15} />
+          {selected ? "Añadido a comparación" : "Comparar inmueble"}
+        </button>
       </div>
     </article>
   );

@@ -1,90 +1,118 @@
-import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowLeft, ArrowRight, SearchX, RotateCw } from "lucide-react";
 import PropertyCard from "./PropertyCard";
-
-const PAGE_SIZE = 9;
+import { pageRange } from "../services/catalog-model";
+export function LoadingCards() {
+  return (
+    <div
+      className="property-grid"
+      role="status"
+      aria-label="Cargando inmuebles"
+    >
+      {Array.from({ length: 3 }, (_, i) => (
+        <div className="skeleton-card" key={i}>
+          <div />
+          <span />
+          <span />
+          <span />
+        </div>
+      ))}
+    </div>
+  );
+}
 export default function ResultsGrid({
   properties = [],
   loading = false,
   error = "",
   onRetry,
   title = "Inmuebles disponibles",
+  page = 1,
+  onPageChange = () => {},
+  pageSize = 9,
+  emptyAction = true,
 }) {
-  const [page, setPage] = useState(1);
-  useEffect(() => {
-    setPage(1);
-  }, [properties]);
-  const totalPages = Math.ceil(properties.length / PAGE_SIZE);
-  const visible = properties.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const total = Math.ceil(properties.length / pageSize),
+    safePage = Math.min(Math.max(1, page), Math.max(1, total)),
+    visible = properties.slice((safePage - 1) * pageSize, safePage * pageSize);
   return (
-    <section aria-label={title} className="alfaro-section" aria-live="polite">
-      <div className="mb-7 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="alfaro-eyebrow">EXPLORA ALFARO</p>
-          <h2 className="alfaro-heading">{title}</h2>
-        </div>
+    <section className="results-section" aria-label={title} aria-live="polite">
+      <div className="results-heading">
+        <h2>{title}</h2>
         {!loading && !error && (
-          <p className="text-sm font-medium text-slate-500">
+          <span>
             {properties.length}{" "}
-            {properties.length === 1 ? "inmueble" : "inmuebles"} encontrados
-          </p>
+            {properties.length === 1
+              ? "inmueble encontrado"
+              : "inmuebles encontrados"}
+          </span>
         )}
       </div>
       {loading ? (
-        <div
-          role="status"
-          className="rounded-2xl border bg-white p-10 text-center text-slate-600"
-        >
-          Cargando inmuebles…
-        </div>
+        <LoadingCards />
       ) : error ? (
-        <div
-          role="alert"
-          className="rounded-2xl border border-red-200 bg-red-50 p-8 text-center text-red-800"
-        >
-          {error}
+        <div role="alert" className="empty-state">
+          <RotateCw />
+          <h3>No pudimos cargar el catálogo</h3>
+          <p>{error}</p>
           {onRetry && (
-            <button
-              type="button"
-              onClick={onRetry}
-              className="ml-3 underline font-semibold"
-            >
+            <button className="button button-red" onClick={onRetry}>
               Reintentar
             </button>
           )}
         </div>
-      ) : properties.length === 0 ? (
-        <div className="rounded-2xl border bg-white p-10 text-center text-slate-600">
-          No encontramos inmuebles para esos filtros. Prueba otra búsqueda.
+      ) : !properties.length ? (
+        <div className="empty-state">
+          <SearchX />
+          <h3>No encontramos inmuebles para esos filtros</h3>
+          <p>
+            Amplía la ubicación o ajusta los filtros para explorar más opciones.
+          </p>
+          {emptyAction && (
+            <Link className="button button-dark" to="/propiedades">
+              Ver todos los inmuebles
+            </Link>
+          )}
         </div>
       ) : (
         <>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {visible.map((property) => (
-              <PropertyCard key={property.id} property={property} />
+          <div className="property-grid">
+            {visible.map((p) => (
+              <PropertyCard key={p.id} property={p} />
             ))}
           </div>
-          {totalPages > 1 && (
-            <nav
-              aria-label="Paginación de propiedades"
-              className="mt-9 flex items-center justify-center gap-4"
-            >
+          {total > 1 && (
+            <nav className="pagination" aria-label="Paginación de propiedades">
               <button
-                className="alfaro-page-btn"
-                disabled={page === 1}
-                onClick={() => setPage((p) => p - 1)}
+                aria-label="Página anterior"
+                disabled={safePage === 1}
+                onClick={() => onPageChange(safePage - 1)}
               >
-                Anterior
+                <ArrowLeft size={16} />
               </button>
-              <span className="text-sm font-semibold text-slate-600">
-                Página {page} de {totalPages}
+              {pageRange(safePage, total).map((p) =>
+                typeof p === "number" ? (
+                  <button
+                    key={p}
+                    aria-label={`Página ${p}`}
+                    aria-current={p === safePage ? "page" : undefined}
+                    onClick={() => onPageChange(p)}
+                  >
+                    {p}
+                  </button>
+                ) : (
+                  <span key={p}>…</span>
+                ),
+              )}
+              <button
+                aria-label="Página siguiente"
+                disabled={safePage === total}
+                onClick={() => onPageChange(safePage + 1)}
+              >
+                <ArrowRight size={16} />
+              </button>
+              <span className="pagination-detail">
+                Página {safePage} de {total}
               </span>
-              <button
-                className="alfaro-page-btn"
-                disabled={page === totalPages}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Siguiente
-              </button>
             </nav>
           )}
         </>

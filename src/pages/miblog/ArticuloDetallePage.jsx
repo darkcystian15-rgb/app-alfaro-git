@@ -27,7 +27,7 @@ const ArticuloDetallePage = () => {
       <Link to="/blog/noticias" className="text-[#DF011A] font-semibold mb-6 inline-block">
         ← Volver a Articulos
       </Link>
-      <h1 className="text-4xl font-bold mb-6">{articulo.titulo}</h1>
+      <h2 className="text-4xl font-bold mb-6">{articulo.titulo}</h2>
       <img src={articulo.imagen} alt={articulo.titulo} className="w-full h-96 object-cover rounded-2xl mb-6" />
       <p className="text-gray-600 text-sm mb-6">
         {new Date(articulo.fecha).toLocaleDateString("es-PE", {

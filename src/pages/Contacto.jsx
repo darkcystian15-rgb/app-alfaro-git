@@ -18,9 +18,9 @@ const Contacto = () => {
         alt="Logo Inmobiliaria"
         className="mx-auto mb-6 w-32 md:w-48 h-auto object-contain"
       />
-      <h1 className="text-3xl md:text-4xl font-extrabold text-center text-[#DF011A] mb-6">
+      <h2 className="text-3xl md:text-4xl font-extrabold text-center text-[#DF011A] mb-6">
         Conócenos
-      </h1>
+      </h2>
       <p className="text-gray-700 text-base md:text-lg leading-relaxed mb-6">
         En <span className="font-semibold">nuestra firma inmobiliaria</span> entendemos que cada decisión inmobiliaria es también una <span className="font-semibold">decisión de vida</span>.
       </p>
