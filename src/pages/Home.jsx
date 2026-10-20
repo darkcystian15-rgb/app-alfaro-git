@@ -1,92 +1,85 @@
-// ✅ Página principal que orquesta todo
-import React, { useState, useEffect, useRef } from "react";
-import ContactForm from "../components/ContactForm";
-import SearchBanner from "../components/SearchBanner";
-import SocialMediaCallToAction from "../components/SocialMediaCallToAction";
+import React, { useEffect, useRef, useState } from "react";
 import PageWrapper from "../components/PageWrapper";
-import FeaturedProperties from "../components/FeaturedProperties";
+import SearchBanner from "../components/SearchBanner";
 import ResultsGrid from "../components/ResultsGrid";
-
+import FeaturedProperties from "../components/FeaturedProperties";
+import SocialMediaCallToAction from "../components/SocialMediaCallToAction";
+import ContactForm from "../components/ContactForm";
+import { fetchProperties } from "../services/properties";
 export default function Home() {
-  const [searchFilters, setSearchFilters] = useState(null);
-  const [searchResults, setSearchResults] = useState([]);
-
-  // 👉 Ref para hacer scroll suave al grid
+  const [filters, setFilters] = useState(null),
+    [results, setResults] = useState([]),
+    [loading, setLoading] = useState(false),
+    [error, setError] = useState(""),
+    [retry, setRetry] = useState(0);
   const resultsRef = useRef(null);
-
-  const handleSearch = (newFilters) => {
-    setSearchFilters(newFilters);
-  };
-
-  // 🔹 Actualiza resultados del grid cuando cambian los filtros
   useEffect(() => {
-    if (!searchFilters) return;
-
-    const params = new URLSearchParams(searchFilters).toString();
-    // console.log("🔹 Parámetros de búsqueda:", params);
-
-    fetch(`/api/getProperties?${params}`)
-      .then((res) => res.json())
-   .then((data) => {
- //  console.log("🔹 Datos que llegan de la API:", data);
-  setSearchResults(data);
-
-  // 🚀 AUTO-SCROLL cuando llegan resultados (con offset)
-  setTimeout(() => {
-    if (resultsRef.current) {
-      const offset = -5; // espacio extra hacia abajo
-      const top = resultsRef.current.offsetTop - offset;
-
-      window.scrollTo({
-        top,
-        behavior: "smooth",
+    if (!filters) return;
+    const c = new AbortController();
+    setLoading(true);
+    setError("");
+    fetchProperties(filters, { signal: c.signal })
+      .then((items) => {
+        if (c.signal.aborted) return;
+        setResults(items);
+        requestAnimationFrame(() =>
+          resultsRef.current?.scrollIntoView({
+            behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
+              .matches
+              ? "auto"
+              : "smooth",
+            block: "start",
+          }),
+        );
+      })
+      .catch((e) => {
+        if (e.name !== "AbortError") setError(e.message);
+      })
+      .finally(() => {
+        if (!c.signal.aborted) setLoading(false);
       });
-    }
-  }, 200);
-})
-   .catch((err) => console.error("Error en búsqueda:", err));
-  }, [searchFilters]);
-
+    return () => c.abort();
+  }, [filters, retry]);
   return (
     <PageWrapper>
-      <main className="space-y-4 p-0.5 sm:p-1 bg-gray-100">
-        {/* Banner de búsqueda */}
-        <SearchBanner onSearch={handleSearch} />
-
-        {/* Grid de resultados solo si hay búsqueda */}
-    {searchFilters && (
-  <div ref={resultsRef}>
-    <ResultsGrid properties={searchResults} />
-  </div>
-)}
-
-
-        {/* Carrusel de propiedades destacadas siempre 6 más recientes */}
-        <section id="redes" className="bg-gray-50 p-6 rounded-2xl shadow bg-white">
-          <FeaturedProperties />
-        </section>
-
-        {/* Redes sociales */}
-        <section id="redes" className="bg-gray-50 p-6 rounded-2xl shadow bg-white">
+      <main className="alfaro-page">
+        <SearchBanner
+          onSearch={(nextFilters) => {
+            setLoading(true);
+            setError("");
+            setFilters({ ...nextFilters });
+          }}
+        />
+        {filters && (
+          <div ref={resultsRef} className="scroll-mt-24">
+            <ResultsGrid
+              properties={results}
+              title="Resultados de tu búsqueda"
+              loading={loading}
+              error={error}
+              onRetry={() => setRetry((x) => x + 1)}
+            />
+          </div>
+        )}
+        <FeaturedProperties />
+        <div id="redes" className="alfaro-section">
           <SocialMediaCallToAction />
+        </div>
+        <section className="alfaro-section" id="contacto">
+          <div className="grid gap-8 rounded-3xl bg-white p-6 shadow-sm md:grid-cols-2 md:p-12">
+            <div>
+              <p className="alfaro-eyebrow">ATENCIÓN PERSONALIZADA</p>
+              <h2 className="alfaro-heading">
+                Hablemos de tu próximo inmueble
+              </h2>
+              <p className="mt-4 text-slate-600">
+                Te asesoramos para vender, alquilar o encontrar una propiedad
+                que se adapte a tus necesidades.
+              </p>
+            </div>
+            <ContactForm />
+          </div>
         </section>
-
-        {/* Contacto */}
- <section
-  id="contacto"
-  className="bg-gray-50 p-6 rounded-2xl shadow bg-white bg-cover bg-center"
-  style={{
-   backgroundImage: "url('/banner_contacto_3.png')",
-  }}
->
- 
-
-  <ContactForm />
-</section>
-
-
-
-        
       </main>
     </PageWrapper>
   );

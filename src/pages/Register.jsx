@@ -1,19 +1,22 @@
-import React from 'react';
-import RegisterForm from '../components/RegisterForm';
-import PageWrapper from '../components/PageWrapper';
+import React from "react";
+import { Link } from "react-router-dom";
+import PageWrapper from "../components/PageWrapper";
 export default function Register() {
-  return (<PageWrapper>
-    <div className="min-h-screen flex items-center justify-center bg-slate-100 px-4 py-10">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8">
-        <h2 className="text-2xl font-bold text-center text-slate-800 mb-6">Crea tu cuenta</h2>
-        <RegisterForm />
-        <p className="text-sm text-center text-slate-600 mt-4">
-          ¿Ya tienes una cuenta?{' '}
-          <a href="/login" className="text-indigo-600 hover:underline">
-            Inicia sesión
-          </a>
+  return (
+    <PageWrapper>
+      <main className="alfaro-section text-center">
+        <h1 className="alfaro-heading">Registro no disponible</h1>
+        <p className="mt-4 text-slate-600">
+          El registro de cuentas públicas aún no está habilitado. Puedes
+          consultar nuestros inmuebles sin crear una cuenta.
         </p>
-      </div>
-    </div>
-  </PageWrapper>);
+        <Link
+          className="mt-6 inline-block rounded-xl bg-[#b7192a] px-6 py-3 font-semibold text-white no-underline"
+          to="/propiedades"
+        >
+          Ver propiedades
+        </Link>
+      </main>
+    </PageWrapper>
+  );
 }

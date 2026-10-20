@@ -1,14 +1,19 @@
-import React from 'react';
-import AdminDashboard from '../components/AdminDashboard';
-import PageWrapper from '../components/PageWrapper';
+import React from "react";
+import { Link } from "react-router-dom";
+import PageWrapper from "../components/PageWrapper";
 export default function Admin() {
-  return (<PageWrapper>
-    <div className="min-h-screen bg-gray-50 p-4">
-      <header className="mb-6">
-        <h1 className="text-3xl font-bold text-slate-800">Panel de Administración</h1>
-        <p className="text-slate-600 mt-1">Gestión de propiedades, usuarios y solicitudes.</p>
-      </header>
-      <AdminDashboard />
-    </div>
-  </PageWrapper>);
+  return (
+    <PageWrapper>
+      <main className="alfaro-section text-center">
+        <h1 className="alfaro-heading">Administración independiente</h1>
+        <p className="mt-4 text-slate-600">
+          Este portal no incluye un panel administrativo público. Utiliza los
+          accesos privados de la intranet.
+        </p>
+        <Link to="/" className="mt-6 inline-block font-semibold text-[#b7192a]">
+          Volver al inicio
+        </Link>
+      </main>
+    </PageWrapper>
+  );
 }
