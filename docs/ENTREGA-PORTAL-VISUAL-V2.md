@@ -70,7 +70,7 @@ validar los despliegues. No se afirma una publicación antes de comprobarla.
 
 ## Reproducción
 
-Requiere Node 20 o superior; se comprobó con Node 24.
+Usar Node 24, igual que el proyecto Vercel.
 
 ```sh
 npm ci

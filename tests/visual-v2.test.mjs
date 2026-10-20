@@ -12,8 +12,8 @@ import {
   shareHtml,
   renderShareImage,
   fetchPublicImage,
-} from "../server/share-render.mjs";
-import { createShareHandler } from "../server/share-handler.mjs";
+} from "../server/share-render.js";
+import { createShareHandler } from "../server/share-handler.js";
 const row = {
   id: 36,
   title: 'Casa <script>alert(1)</script> "& visita',

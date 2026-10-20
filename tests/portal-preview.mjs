@@ -3,7 +3,7 @@
 import http from "node:http";
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
-import { createShareHandler } from "../server/share-handler.mjs";
+import { createShareHandler } from "../server/share-handler.js";
 const root = path.resolve(
   process.env.PORTAL_BUILD_DIR || "/tmp/darkcystian-review/v2-build",
 );

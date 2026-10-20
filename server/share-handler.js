@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { shareHtml, renderShareImage } from "./share-render.mjs";
+import { shareHtml, renderShareImage } from "./share-render.js";
 export function createShareHandler({
   getProperty,
   renderImage = renderShareImage,

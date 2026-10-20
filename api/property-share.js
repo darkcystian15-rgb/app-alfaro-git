@@ -1,5 +1,5 @@
 import { pool } from "./db.js";
-import { createShareHandler } from "../server/share-handler.mjs";
+import { createShareHandler } from "../server/share-handler.js";
 export default createShareHandler({
   getProperty: async (id) => {
     const [rows] = await pool.execute(
