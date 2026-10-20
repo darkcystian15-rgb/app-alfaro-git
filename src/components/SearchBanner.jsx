@@ -1,178 +1,163 @@
-// ✅ Banner de búsqueda dinámico
-import React, { useState, useEffect } from "react";
-import CustomSelect from "./CustomSelect";
-
-const SearchBanner = ({ onSearch }) => {
-  const [distritosOptions, setDistritosOptions] = useState([]);
-  const [modalidadesOptions, setModalidadesOptions] = useState([]);
-  const [tiposOptions, setTiposOptions] = useState([]);
-
-  const [distritos, setDistritos] = useState([]);
-  const [modalidades, setModalidades] = useState([]);
-  const [tipos, setTipos] = useState([]);
-
-  const [openDropdown, setOpenDropdown] = useState(null);
-  const [showText, setShowText] = useState(false);
-
-  useEffect(() => setTimeout(() => setShowText(true), 200), []);
-
-  // 🖼️ Lista de imágenes del banner
-  const images = [
-    "/IMG2.png",
-    "/IMG3.png",
-    "/IMG5.png",
-    "/IMG6.png",
-   
-  ];
-
-  const [currentImage, setCurrentImage] = useState(0);
-
-  // ⏱️ Rotación automática
+import React, { useEffect, useState } from "react";
+import { Search, MapPin } from "lucide-react";
+export default function SearchBanner({ onSearch }) {
+  const [options, setOptions] = useState({
+    distritos: [],
+    modalidades: [],
+    tipos: [],
+  });
+  const [filters, setFilters] = useState({
+    location: "",
+    status: "",
+    title: "",
+  });
+  const [loading, setLoading] = useState(true),
+    [error, setError] = useState("");
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentImage((prev) => (prev + 1) % images.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [images.length]);
-
-  // 🔹 Carga opciones dinámicas
-  useEffect(() => {
-    const fetchOptions = async () => {
-      try {
-        const res = await fetch("/api/get-options");
-        const data = await res.json();
-        setDistritosOptions(data.distritos || []);
-        setModalidadesOptions(data.modalidades || []);
-        setTiposOptions(data.tipos || []);
-      } catch (error) {
-        console.error("Error cargando opciones:", error);
-      }
-    };
-    fetchOptions();
+    const c = new AbortController();
+    fetch("/api/get-options", { signal: c.signal })
+      .then((r) => {
+        if (!r.ok) throw new Error("No se pudieron cargar los filtros");
+        return r.json();
+      })
+      .then((d) => {
+        if (
+          !d ||
+          !Array.isArray(d.distritos) ||
+          !Array.isArray(d.modalidades) ||
+          !Array.isArray(d.tipos) ||
+          d.distritos.some(
+            (group) =>
+              !group ||
+              !Array.isArray(group.distritos) ||
+              group.distritos.some(
+                (district) => !district || typeof district.nombre !== "string",
+              ),
+          ) ||
+          [...d.modalidades, ...d.tipos].some(
+            (value) => typeof value !== "string",
+          )
+        ) {
+          throw new Error("Invalid search options");
+        }
+        if (!c.signal.aborted) setOptions(d);
+      })
+      .catch((e) => {
+        if (e.name !== "AbortError")
+          setError("No pudimos cargar las opciones de búsqueda");
+      })
+      .finally(() => {
+        if (!c.signal.aborted) setLoading(false);
+      });
+    return () => c.abort();
   }, []);
-
-  // 🚀 Nuevo: función que limpia "Todos"
-  const cleanFilter = (arr) => {
-    if (!Array.isArray(arr)) return [];
-    return arr.filter((item) => item.toLowerCase() !== "todos");
-  };
-
-  const isSearchEnabled =
-    distritos.length > 0 && modalidades.length > 0 && tipos.length > 0;
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    // 🧹 Nueva limpieza segura
-    const cleanDistritos = cleanFilter(distritos);
-    const cleanModalidades = cleanFilter(modalidades);
-    const cleanTipos = cleanFilter(tipos);
-
-    // 📦 Si el usuario eligió "Todos", simplemente NO enviamos ese filtro
-    const filters = {
-      location: cleanDistritos.length ? cleanDistritos.join(",") : "",
-      status: cleanModalidades.length ? cleanModalidades.join(",") : "",
-      title: cleanTipos.length ? cleanTipos.join(",") : "",
-    };
-
-    onSearch(filters);
-  };
-
+  const update = (name, value) =>
+    setFilters((prev) => ({ ...prev, [name]: value }));
   return (
-    <section className="relative w-full h-[520px] flex flex-col items-center justify-center mt-2 px-4 overflow-visible rounded-3xl">
-      {/* Fondos dinámicos */}
-      {images.map((img, index) => (
-        <div
-          key={index}
-          className={`absolute inset-0 transition-opacity duration-[2000ms] ease-in-out ${
-            index === currentImage ? "opacity-100" : "opacity-0"
-          }`}
-          style={{
-            backgroundImage: `url(${img})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-          aria-hidden="true"
-        />
-      ))}
-
-      <div className="relative z-10 w-full max-w-6xl p-6 bg-white bg-opacity-40 rounded-2xl shadow-xl -mt-20 ">
-        <h2
-          className={`text-2xl sm:text-3xl md:text-4xl font-bold text-white text-center mb-6 transition-all duration-1000 ease-out ${
-            showText ? "opacity-100 translate-y-0 float-text" : "opacity-0 translate-y-5"
-          }`}
-          style={{
-            textShadow: "2px 2px 4px rgba(0,0,0,0.6), 0 0 6px rgba(255,0,0,0.4)",
+    <section
+      className="relative isolate flex min-h-[460px] items-center overflow-hidden bg-[#152337] px-4 py-20 text-white sm:min-h-[520px]"
+      aria-labelledby="hero-title"
+    >
+      <div
+        className="absolute inset-0 -z-10 bg-cover bg-center opacity-35"
+        style={{ backgroundImage: "url('/IMG2.png')" }}
+        aria-hidden="true"
+      />
+      <div
+        className="absolute inset-0 -z-10 bg-gradient-to-r from-[#111b2c] via-[#142136]/85 to-[#142136]/25"
+        aria-hidden="true"
+      />
+      <div className="mx-auto w-full max-w-6xl">
+        <p className="mb-4 text-sm font-bold uppercase tracking-[.2em] text-red-200">
+          Inmobiliaria Alberto Alfaro
+        </p>
+        <h1
+          id="hero-title"
+          className="max-w-3xl text-4xl font-extrabold leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl"
+        >
+          Un lugar para cada etapa de tu vida
+        </h1>
+        <p className="mt-5 max-w-2xl text-base text-slate-100 sm:text-lg">
+          Encuentra propiedades en venta o alquiler con asesoría inmobiliaria
+          personalizada.
+        </p>
+        <form
+          className="mt-9 grid gap-3 rounded-2xl border border-white/20 bg-white p-4 text-slate-800 shadow-2xl sm:grid-cols-2 lg:grid-cols-4 lg:p-5"
+          onSubmit={(e) => {
+            e.preventDefault();
+            onSearch(filters);
           }}
         >
-          EXPLORA PROPIEDADES AQUÍ
-        </h2>
-
-        {/* Formulario */}
-        <form className="flex flex-wrap gap-4 justify-center items-end" onSubmit={handleSubmit}>
-          <div className="w-full sm:w-56">
-            <CustomSelect
-              label="Distrito"
-              options={distritosOptions}
-              selected={distritos}
-              setSelected={setDistritos}
-              includeSelectAll
-              openDropdown={openDropdown}
-              setOpenDropdown={setOpenDropdown}
-            />
-          </div>
-
-          <div className="w-full sm:w-56">
-            <CustomSelect
-              label="Modalidad"
-              options={modalidadesOptions}
-              selected={modalidades}
-              setSelected={setModalidades}
-              includeSelectAll
-              openDropdown={openDropdown}
-              setOpenDropdown={setOpenDropdown}
-            />
-          </div>
-
-          <div className="w-full sm:w-56">
-            <CustomSelect
-              label="Tipo"
-              options={tiposOptions}
-              selected={tipos}
-              setSelected={setTipos}
-              includeSelectAll
-              openDropdown={openDropdown}
-              setOpenDropdown={setOpenDropdown}
-            />
-          </div>
-
-          <div className="w-full sm:w-auto flex justify-center items-center">
-            <button
-              type="submit"
-              disabled={!isSearchEnabled}
-              className={`w-full sm:w-auto py-2 px-6 rounded-lg font-semibold shadow-md transition-all duration-300 ${
-                isSearchEnabled
-                  ? "bg-[#DC2626] hover:bg-[#B91C1C] active:bg-[#991B1B] text-white"
-                  : "bg-[#FCA5A5] text-white/80 cursor-not-allowed"
-              }`}
+          <label className="flex flex-col gap-1 text-sm font-semibold">
+            Ubicación
+            <select
+              value={filters.location}
+              onChange={(e) => update("location", e.target.value)}
+              className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 text-slate-700"
             >
-              Buscar
-            </button>
-          </div>
+              <option value="">Todas las ubicaciones</option>
+              {options.distritos
+                .flatMap((group) => group.distritos || [])
+                .map((d) => (
+                  <option key={d.id} value={d.nombre}>
+                    {d.nombre}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-sm font-semibold">
+            Operación
+            <select
+              value={filters.status}
+              onChange={(e) => update("status", e.target.value)}
+              className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 text-slate-700"
+            >
+              <option value="">Venta y alquiler</option>
+              {options.modalidades.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-sm font-semibold">
+            Tipo de inmueble
+            <select
+              value={filters.title}
+              onChange={(e) => update("title", e.target.value)}
+              className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 text-slate-700"
+            >
+              <option value="">Todos los tipos</option>
+              {options.tipos.map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="submit"
+            className="mt-5 flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#b7192a] px-6 font-bold text-white transition-colors hover:bg-[#961222]"
+          >
+            <Search size={18} />
+            Buscar inmuebles
+          </button>
+          {loading && (
+            <p className="col-span-full text-xs text-slate-500" role="status">
+              Cargando opciones de búsqueda…
+            </p>
+          )}
+          {error && (
+            <p className="col-span-full text-xs text-red-700" role="status">
+              {error}. Puedes buscar sin filtros mientras tanto.
+            </p>
+          )}
         </form>
+        <p className="mt-4 flex items-center gap-2 text-sm text-slate-100">
+          <MapPin size={16} /> Chimbote · Nuevo Chimbote · Casma y más
+          ubicaciones
+        </p>
       </div>
-
-      <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-8px); }
-        }
-        .float-text {
-          animation: float 3s ease-in-out infinite;
-        }
-      `}</style>
     </section>
   );
-};
-
-export default SearchBanner;
+}

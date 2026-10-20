@@ -1,143 +1,59 @@
-// src/components/FeaturedProperties.jsx
 import React, { useEffect, useState } from "react";
-import { Swiper, SwiperSlide } from "swiper/react";
-import "swiper/css";
-import { Autoplay } from "swiper/modules";
-import PropertyModal from "./PropertyModal";
+import PropertyCard from "./PropertyCard";
+import { fetchProperties } from "../services/properties";
 
-const FeaturedProperties = () => {
-  const [properties, setProperties] = useState([]);
-  const [selectedProperty, setSelectedProperty] = useState(null);
-
+export default function FeaturedProperties() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [retry, setRetry] = useState(0);
   useEffect(() => {
-    const fetchFeatured = async () => {
-      try {
-        const res = await fetch("/api/getProperties?featured=true");
-        const data = await res.json();
-        setProperties(data);
-      } catch (err) {
-        console.error("Error al cargar propiedades destacadas:", err);
-      }
-    };
-    fetchFeatured();
-  }, []);
-
-  const openPopup = (prop) => setSelectedProperty(prop);
-  const closePopup = () => setSelectedProperty(null);
-
+    const controller = new AbortController();
+    setLoading(true);
+    setError("");
+    fetchProperties({ featured: "true" }, { signal: controller.signal })
+      .then(setItems)
+      .catch((e) => {
+        if (e.name !== "AbortError") setError(e.message);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [retry]);
   return (
-    <section className="mb-12">
- 
-
-            <div className="mb-4">
-    <img 
-      src="/subtitulos/propiedades_destacadas.png" 
-      alt="Propiedades Destacadas" 
-      className="w-[30rem] mx-auto" 
-    />
-  </div>
-      
-      <Swiper
-        modules={[Autoplay]}
-        spaceBetween={20}
-        loop
-        autoplay={{ delay: 2000, disableOnInteraction: false }}
-        speed={3000}
-        breakpoints={{
-          640: { slidesPerView: 1 },
-          768: { slidesPerView: 2 },
-          1024: { slidesPerView: 3 },
-        }}
-      >
-        {properties.map((prop, index) => (
-          <SwiperSlide key={prop.id}>
-            <div className="relative bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col">
-              
-                  <a
-      href={`/propiedades/resumen/${prop.id}`}
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-                    
-              <img
-                src={prop.image}
-                alt={prop.title}
-                className="w-full h-48 object-cover"
-                loading="lazy"
-              />
-
-                     </a>
-              
-              <div className="p-4 flex flex-col flex-grow">
-<h3
-  className="text-lg font-bold truncate 
-             bg-white text-[#DF011A]
-             px-3 py-1 
-             inline-block rounded-xl 
-             border border-white"
->
-  {prop.title}
-</h3>
-
-
-                  <p className="text-black font-semibold mt-1 truncate">
-                 {prop.address}
-                </p>
-                <p className="text-gray-500">{prop.location}</p>
-                 <p className="text-black font-semibold mt-1">
-            {prop.moneda} {Number(prop.price).toLocaleString("es-PE")}
-          </p>
-
-                {/* Tipo de propiedad */}
-                {prop.status && (
-                  <p className="text-sm text-gray-600 mt-2 mb-2">{prop.status}</p>
-                )}
-
-                {/* Botones */}
-                <div className="mt-auto flex gap-2">
-                  {/* WhatsApp */}
-                  <a
-                    href={`https://wa.me/51940221494?text=Hola, me interesa la propiedad: ${prop.title}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 bg-[#DF011A] text-white text-center py-2 px-3 rounded-lg hover:bg-[#BB0017] active:bg-[#980013] transition no-underline hover:no-underline focus:no-underline active:no-underline"
-                  >
-                    Contactar
-                  </a>
-
-            {/*
-  Ver Flxyer (rojo)
-  <button
-    onClick={() => openPopup(prop)}
-    className="flex-1 bg-red-500 text-white text-center py-2 px-3 rounded-lg hover:bg-red-600 transition"
-  >
-    Ver flxyer
-  </button>
-*/}
-
-                  {/* Ver Resumen (azul) */}
-                  <a
-                    href={`/propiedades/resumen/${prop.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1   bg-[#353535] text-white text-center py-2 px-3 rounded-lg hover:bg-[#1A1A1A] active:bg-[#0F0F0F] transition no-underline hover:no-underline focus:no-underline active:no-underline"
-                  >
-                    Ver más
-                  </a>
-                </div>
-              </div>
-            </div>
-          </SwiperSlide>
-        ))}
-      </Swiper>
-
-      {/* PropertyModal */}
-      {selectedProperty && (
-        <PropertyModal property={selectedProperty} onClose={closePopup} />
+    <section className="alfaro-section" aria-labelledby="destacados-title">
+      <div className="mb-7">
+        <p className="alfaro-eyebrow">SELECCIÓN INMOBILIARIA</p>
+        <h2 id="destacados-title" className="alfaro-heading">
+          Propiedades destacadas
+        </h2>
+        <p className="mt-2 text-slate-600">
+          Oportunidades para vivir, invertir o hacer crecer tu negocio.
+        </p>
+      </div>
+      {loading ? (
+        <p role="status" className="py-10 text-center text-slate-500">
+          Cargando propiedades destacadas…
+        </p>
+      ) : error ? (
+        <p role="alert" className="rounded-xl bg-red-50 p-6 text-red-800">
+          {error}{" "}
+          <button onClick={() => setRetry((v) => v + 1)} className="underline">
+            Reintentar
+          </button>
+        </p>
+      ) : items.length === 0 ? (
+        <p className="rounded-xl bg-white p-6 text-slate-600">
+          Pronto tendremos nuevas propiedades destacadas.
+        </p>
+      ) : (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {items.slice(0, 6).map((item) => (
+            <PropertyCard key={item.id} property={item} />
+          ))}
+        </div>
       )}
     </section>
   );
-};
-
-export default FeaturedProperties;
-
+}
