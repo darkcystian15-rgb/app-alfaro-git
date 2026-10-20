@@ -86,10 +86,32 @@ catálogo público de Darkcystian, sin modificar el producto. Para validar sus A
 reales se creó un despliegue con `--prod --skip-domain`: utiliza la configuración
 existente de Production y conserva el dominio público en el despliegue anterior.
 La primera prueba remota identificó una carrera del indicador de búsqueda; se
-ajustó el inicio de carga al evento de búsqueda y se vuelve a validar antes del merge.
+ajustó el inicio de carga al evento de búsqueda y la versión corregida pasó la
+comprobación completa antes del merge.
 
-Production pública: pendiente de finalizar la validación y fusionar el PR. Los
-resultados y enlaces definitivos se incorporan después de comprobarlos.
+### Publicación comprobada
+
+- Código corregido: `09a785dbfd698d51ed654cf65d286c0d79436a0e`.
+- Preview Git corregido: https://app-alfaro-6p2il4i84-puma19.vercel.app,
+  `dpl_GofaHQUpg4s6Hyt97mFu4uqjcr4k`, READY. Conserva la limitación previa de variables MySQL.
+- Validación completa previa a publicación: https://app-alfaro-gcffjr1cq-puma19.vercel.app,
+  `dpl_G1bAMe9oqwU31VVmtYMLSBwtd7KG`, READY, configuración Production sin asignar dominios.
+- PR #1 fusionado. Commit de merge en main: `e6d77e68bffe226e6562eccfe954bb3b8e090d3c`.
+- Production verificada: https://app-alfaro-git-smoky.vercel.app.
+- Deployment: `dpl_626cbqyhNDViWJbLCrPUQUbUncpM`, READY,
+  https://app-alfaro-4t3a7tlwt-puma19.vercel.app, del SHA de merge indicado.
+- Dominio y vínculo Git cotejados mediante la API Vercel del proyecto exclusivo de Darkcystian.
+- En Production pública se repitió la prueba completa de navegador sin redirigir las APIs:
+  375/768/1440 px, doce rutas adicionales a Inicio, filtros, catálogo, ficha, paginación,
+  WhatsApp, monedas y escenarios de fallo aislados. Cero errores JavaScript no capturados.
+- GET de catálogo, destacados, opciones y detalle existente: HTTP 200. Conteos antes/después:
+  64 inmuebles y 8 destacados; la portada muestra como máximo seis, sin eliminar registros.
+
+Este registro se incorpora mediante un commit exclusivamente documental posterior a la
+publicación comprobada. Ese commit no cambia el código validado; su despliegue automático
+se coteja con main y con las mismas referencias de assets del despliegue probado.
+La evidencia agregada está en `EVIDENCIA-VERIFICACION-FASES-1-2.json`.
+No se guardan registros de inmuebles, capturas privadas o credenciales en Git.
 
 ## Pendientes fuera de estas fases
 
@@ -97,3 +119,13 @@ Las fases 3 y 4 están documentadas en `HANDOFF-FASES-3-4.md`, sin implementaci�
 Persisten hallazgos históricos de seguridad del documento original: mantenimiento
 coordinado de secretos, HTML de BD, errores internos de APIs y registros de formularios.
 No se rotaron credenciales ni se alteraron bases de datos o integraciones.
+
+## Límites de la verificación y compatibilidad heredada
+
+Las comprobaciones de rutas confirman renderizado y navegación; no certifican envíos
+de formularios ni ejecutan acciones externas. Se conservan las llamadas Netlify heredadas
+en Noticias y Vende o alquila: en Vercel sus destinos responden HTML, por lo que el
+listado de noticias y el envío de ese formulario requieren mantenimiento posterior.
+Este hallazgo ya existe en el despliegue base; no se modificaron esas integraciones.
+El Preview estándar necesita configuración de BD en Preview para probar sus APIs
+sin la alternativa aislada descrita. Production funciona con su configuración existente.

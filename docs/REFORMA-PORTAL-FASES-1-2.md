@@ -1,3 +1,6 @@
+> Documento original del ZIP: describe la preparación previa a esta implementación.
+> Resultados actuales: [Entrega y despliegue](ENTREGA-REFORMA-PORTAL.md).
+
 # Portal Alfaro — reestructuración y rediseño (fases 1 y 2)
 Fecha: 2026-10-20
 Proyecto único: `darkcystian15-rgb/app-alfaro-git`.

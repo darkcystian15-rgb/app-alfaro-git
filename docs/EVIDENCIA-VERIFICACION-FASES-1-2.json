@@ -1,0 +1,64 @@
+{
+  "scope": "darkcystian15-rgb/app-alfaro-git: phases 1 and 2",
+  "projectId": "prj_W5ADa1iBP42vjncafADM4jm8QBWk",
+  "productionVerified": {
+    "sha": "e6d77e68bffe226e6562eccfe954bb3b8e090d3c",
+    "id": "dpl_626cbqyhNDViWJbLCrPUQUbUncpM",
+    "url": "app-alfaro-4t3a7tlwt-puma19.vercel.app",
+    "domain": "app-alfaro-git-smoky.vercel.app",
+    "state": "READY",
+    "repo": "darkcystian15-rgb/app-alfaro-git"
+  },
+  "unitTests": {
+    "passed": 5,
+    "failed": 0
+  },
+  "browserChecks": {
+    "base": "https://app-alfaro-git-smoky.vercel.app",
+    "results": [
+      "Home: six live featured properties, empty filters, pagination forward/backward",
+      "WhatsApp institutional contact and property link",
+      "Home widths 375/768/1440 without horizontal overflow; mobile menu opens/closes",
+      "12 public routes including existing real property summary; simulated auth forms disabled; no uncaught JavaScript errors",
+      "Synthetic isolated cases: empty/error/retry/invalid JSON, missing image, soles and combined filters"
+    ],
+    "runtimeErrors": [],
+    "failedApi": []
+  },
+  "readonlyApiChecks": {
+    "at": "2026-10-20T23:00:56.667928+00:00",
+    "results": [
+      {
+        "path": "/api/getProperties",
+        "status": 200,
+        "type": "list",
+        "count": 64
+      },
+      {
+        "path": "/api/getProperties?featured=true",
+        "status": 200,
+        "type": "list",
+        "count": 8
+      },
+      {
+        "path": "/api/get-options",
+        "status": 200,
+        "type": "dict",
+        "count": 3
+      },
+      {
+        "path": "/api/getPropertyDetails?id=36",
+        "status": 200,
+        "type": "dict",
+        "count": 2
+      }
+    ]
+  },
+  "excluded": [
+    "Cystian/app-alfaro-git",
+    "darkcystian15-rgb/inmobiliaria-alfaro",
+    "database writes",
+    "phases 3 and 4"
+  ],
+  "standardPreviewLimitation": "Existing DB variables have Production scope only; tested UI using a browser-only readonly GET route, then full staged deployment with existing Production configuration and --skip-domain."
+}
