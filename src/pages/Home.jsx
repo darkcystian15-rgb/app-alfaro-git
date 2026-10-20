@@ -43,7 +43,13 @@ export default function Home() {
   return (
     <PageWrapper>
       <main className="alfaro-page">
-        <SearchBanner onSearch={setFilters} />
+        <SearchBanner
+          onSearch={(nextFilters) => {
+            setLoading(true);
+            setError("");
+            setFilters({ ...nextFilters });
+          }}
+        />
         {filters && (
           <div ref={resultsRef} className="scroll-mt-24">
             <ResultsGrid

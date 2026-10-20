@@ -61,7 +61,9 @@ PORTAL_BASE_URL=http://localhost:4173 PORTAL_READONLY_API_ORIGIN=https://app-alf
 ```
 
 `PORTAL_CHROMIUM` permite un binario existente y `PORTAL_ARTIFACTS` cambia la carpeta
-de evidencias (por defecto `/tmp/darkcystian-review`). Las respuestas sintéticas se
+de evidencias (por defecto `/tmp/darkcystian-review`). `PORTAL_HEADERS_FILE` permite
+un archivo privado de encabezados para un Preview protegido; se envían solo al
+origen comprobado, nunca a proveedores de imágenes ni se guardan en Git. Las respuestas sintéticas se
 limitan a un contexto de navegador aislado; no se introducen inmuebles ficticios
 en el producto. Para un despliegue, omitir `PORTAL_READONLY_API_ORIGIN`.
 
@@ -72,9 +74,22 @@ Vínculo Git: `darkcystian15-rgb/app-alfaro-git`, Production desde `main`.
 Dominio propio del fork: `https://app-alfaro-git-smoky.vercel.app`.
 No utilizar el proyecto homónimo vinculado a Cystian ni el de la intranet.
 
-Commit de implementación, Preview, Production y verificaciones remotas: pendientes
-de completar tras subir la rama y revisar sus despliegues. No se afirma una publicación
-antes de comprobar el SHA y estado READY.
+Primera implementación: `64f4e4806352f50425105bc8cb176b2bcb663306`.
+PR: https://github.com/darkcystian15-rgb/app-alfaro-git/pull/1.
+Preview Git inicial: https://app-alfaro-e5kdo52ub-puma19.vercel.app,
+`dpl_BjX7kexqZgv6omiAhXJetafPUy8C`, READY.
+
+La configuración existente tiene variables MySQL solo en Production. Por eso el
+Preview estándar devuelve HTTP 500 en su API. No se alteraron ni copiaron esas
+credenciales. La interfaz del Preview se validó con una ruta GET de Playwright al
+catálogo público de Darkcystian, sin modificar el producto. Para validar sus APIs
+reales se creó un despliegue con `--prod --skip-domain`: utiliza la configuración
+existente de Production y conserva el dominio público en el despliegue anterior.
+La primera prueba remota identificó una carrera del indicador de búsqueda; se
+ajustó el inicio de carga al evento de búsqueda y se vuelve a validar antes del merge.
+
+Production pública: pendiente de finalizar la validación y fusionar el PR. Los
+resultados y enlaces definitivos se incorporan después de comprobarlos.
 
 ## Pendientes fuera de estas fases
 

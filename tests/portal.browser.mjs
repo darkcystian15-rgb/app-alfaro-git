@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, writeFile, readFile } from "node:fs/promises";
 import { chromium } from "playwright";
 
 const base = process.env.PORTAL_BASE_URL || "http://localhost:4173";
@@ -13,6 +13,18 @@ const browser = await chromium.launch({
     : {}),
   args: ["--no-sandbox"],
 });
+const authHeaders = process.env.PORTAL_HEADERS_FILE
+  ? JSON.parse(await readFile(process.env.PORTAL_HEADERS_FILE, "utf8"))
+  : {};
+async function authorize(context) {
+  if (Object.keys(authHeaders).length) {
+    await context.route(base + "/**", (route) =>
+      route.continue({
+        headers: { ...route.request().headers(), ...authHeaders },
+      }),
+    );
+  }
+}
 const cache = new Map();
 const results = [];
 const runtimeErrors = [];
@@ -31,6 +43,7 @@ const context = await browser.newContext({
   viewport: { width: 1440, height: 1000 },
   reducedMotion: "reduce",
 });
+await authorize(context);
 context.on("page", (page) =>
   page.on("pageerror", (e) => runtimeErrors.push(e.message)),
 );
@@ -103,6 +116,7 @@ try {
   const resultsSection = page.getByRole("region", {
     name: "Resultados de tu búsqueda",
   });
+  await resultsSection.locator("article").first().waitFor({ timeout: 60000 });
   assert.equal(await resultsSection.locator("article").count(), 9);
   await page.getByRole("button", { name: "Siguiente", exact: true }).click();
   await page.getByText(/Página 2 de/).waitFor();
@@ -203,6 +217,7 @@ try {
     viewport: { width: 375, height: 812 },
     reducedMotion: "reduce",
   });
+  await authorize(isolated);
   const fixture = {
     id: "test-only",
     title: "Casa de prueba",
