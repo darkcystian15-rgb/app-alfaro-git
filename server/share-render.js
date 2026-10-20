@@ -123,7 +123,18 @@ function outlinedText(value, x, y, size, color, bold = false) {
     };
   }
   const font = bold ? fonts.bold : fonts.regular;
-  return `<path fill="${color}" d="${font.getPath(textOnly(value), x, y, size).toPathData(2)}"/>`;
+  let cursor = x;
+  const scale = size / font.unitsPerEm;
+  // Direct glyph outlines avoid optional shaping tables; the portal uses Latin/Spanish text.
+  const outlines = [...textOnly(value).normalize("NFC")]
+    .map((character) => {
+      const glyph = font.charToGlyph(character);
+      const outline = glyph.getPath(cursor, y, size).toPathData(2);
+      cursor += (glyph.advanceWidth || font.unitsPerEm) * scale;
+      return outline;
+    })
+    .join(" ");
+  return `<path fill="${color}" d="${outlines}"/>`;
 }
 export async function renderShareImage(
   property,
