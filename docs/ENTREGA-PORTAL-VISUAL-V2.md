@@ -65,8 +65,38 @@ filtros por moneda, vacío/reintento, navegación móvil, galería de teclado, J
 páginas institucionales y preparación de consulta sin enviar mensajes. Se utilizan
 respuestas ficticias solo en un contexto aislado para probar errores y HTML hostil.
 
-Las comprobaciones finales remotas, SHA y enlaces de Vercel se completan después de
-validar los despliegues. No se afirma una publicación antes de comprobarla.
+La prueba completa pasó tanto en el despliegue aislado como en Production pública,
+sin sustituir las APIs en esas dos comprobaciones. Se descargaron PDF y JPG reales.
+En 375/768/1440 px se revisaron portada y ficha; las páginas institucionales se
+comprobaron también en móvil y escritorio. Cero errores JavaScript no capturados y
+cero solicitudes de escritura de negocio al origen del portal.
+
+El HTML del crawler contiene metadatos del inmueble, no los genéricos de la SPA.
+El JPEG remoto fue inspeccionado visualmente y utiliza glifos vectoriales para no
+depender de fuentes del sistema de Vercel. Las descargas del entorno protegido se
+verificaron con la cookie de autenticación del propio despliegue; no se exponen tokens.
+
+## Publicación comprobada
+
+- Fuente final probada: `089994be38c85f193fd69601f80adada15c407cd`.
+- PR [#2](https://github.com/darkcystian15-rgb/app-alfaro-git/pull/2), fusionado.
+- Preview final: https://app-alfaro-3y3n0bl4o-puma19.vercel.app,
+  `dpl_DWaL8664btSSn9n1K5hsvXj4xJxP`, READY. Conserva la limitación de variables de BD.
+- Despliegue aislado plenamente validado: https://app-alfaro-kjee2x7oa-puma19.vercel.app,
+  `dpl_GPgupXcp4Ls7QQs7pRiJ8q3rmKTQ`, READY, sin asignación del dominio público.
+- Merge en main: `3c94eaa5158624a08286cbe004901ece5cfd9246`.
+- Production: https://app-alfaro-git-smoky.vercel.app.
+- Deployment probado: `dpl_46NYAyCEVECpbvZfUMtTbzuizUWj`, READY,
+  https://app-alfaro-ga68cnxdi-puma19.vercel.app, del SHA de merge indicado.
+- API de catálogo, destacados, opciones y ficha existente: HTTP 200.
+- Conteos antes/después: 64 inmuebles y 8 destacados; sin escrituras de negocio.
+- Ejemplo gráfico: https://app-alfaro-git-smoky.vercel.app/api/property-share?id=36&format=image.
+
+El commit que incorpora esta evidencia es exclusivamente documental. La comprobación
+final contrasta su SHA en GitHub y Vercel y confirma que conserva los mismos assets
+del código probado. Los resultados agregados están en `EVIDENCIA-PORTAL-VISUAL-V2.json`;
+no se incluyen fotos descargadas, datos de contacto, cookies, secretos ni registros
+completos del catálogo en esa evidencia.
 
 ## Reproducción
 
