@@ -19,6 +19,11 @@ import ContactForm from "../components/ContactForm";
 import SocialMediaCallToAction from "../components/SocialMediaCallToAction";
 import useProperties from "../hooks/useProperties";
 import { filterParams } from "../services/catalog-model";
+const locationImages = {
+  "nuevo chimbote": "/portal/location-nuevo-chimbote-v1.webp",
+  chimbote: "/portal/location-chimbote-v1.webp",
+  casma: "/portal/location-casma-v1.webp",
+};
 const scenes = [
   { image: "/portal/hero-living.webp", label: "Espacios para vivir" },
   { image: "/portal/hero-spaces.webp", label: "Lugares para crecer" },
@@ -196,30 +201,45 @@ export default function Home() {
               </h2>
             </div>
             <p>
-              Encuentra oportunidades
+              Explora inmuebles en venta y alquiler
               <br />
-              en las ubicaciones de nuestro catálogo.
+              en estas ubicaciones.
             </p>
           </div>
           <div className="location-grid">
-            {locations.map(([name, count], i) => (
+            {locations.map(([name, count]) => (
               <Link
                 key={name}
                 to={"/propiedades?" + filterParams({ location: name })}
-                className={"location-tile location-tile-" + i}
+                className="location-card"
+                aria-label={`Explorar ${name}, ${count} ${count === 1 ? "inmueble" : "inmuebles"} en catálogo`}
               >
-                <span className="location-number">0{i + 1}</span>
-                <MapPin size={24} />
-                <div>
+                <img
+                  className="location-card-image"
+                  src={locationImages[name.trim().toLowerCase()] || "/portal/hero-spaces.webp"}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  width="1200"
+                  height="800"
+                />
+                <span className="location-card-count">
+                  <MapPin size={14} aria-hidden="true" />
+                  {count} {count === 1 ? "inmueble" : "inmuebles"}
+                </span>
+                <div className="location-card-copy">
                   <h3>{name}</h3>
-                  <p>
-                    {count} {count === 1 ? "inmueble" : "inmuebles"} en catálogo
-                  </p>
+                  <span className="location-card-action">
+                    Explorar {name}
+                    <span className="location-card-arrow"><ArrowUpRight size={20} aria-hidden="true" /></span>
+                  </span>
                 </div>
-                <ArrowUpRight size={22} />
               </Link>
             ))}
           </div>
+          <p className="location-image-note">
+            Imágenes de ambientación generadas con IA. No son fotografías de las ubicaciones.
+          </p>
         </div>
       </section>
       <section className="section-space shell services-preview">
