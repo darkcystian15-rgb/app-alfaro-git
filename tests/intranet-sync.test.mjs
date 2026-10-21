@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {syncAuthorized,validateSync,createIntranetSyncHandler} from '../server/intranet-sync.mjs';
+import {syncAuthorized,validateSync,createIntranetSyncHandler} from '../server/intranet-sync.js';
 import {safeImageUrl} from '../server/share-render.js';
 const secret='x'.repeat(64);
 test('La escritura exige un secreto de servidor y no acepta credenciales Unicode de longitud diferente',()=>{
