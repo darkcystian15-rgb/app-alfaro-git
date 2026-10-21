@@ -1,8 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {syncAuthorized,validateSync,createIntranetSyncHandler} from '../server/intranet-sync.js';
+import {syncAuthorized,validateSync,createIntranetSyncHandler,canonicalSyncJson} from '../server/intranet-sync.js';
 import {safeImageUrl} from '../server/share-render.js';
 const secret='x'.repeat(64);
+test('Un reintento mantiene identidad aunque MySQL reordene las claves JSON',()=>{
+ assert.equal(canonicalSyncJson({revision:1,snapshot:{title:'Casa',photos:[{id:3,caption:'Sala'}]}}),canonicalSyncJson({snapshot:{photos:[{caption:'Sala',id:3}],title:'Casa'},revision:1}));
+ assert.notEqual(canonicalSyncJson({photos:[1,2]}),canonicalSyncJson({photos:[2,1]}));
+});
 test('La escritura exige un secreto de servidor y no acepta credenciales Unicode de longitud diferente',()=>{
  assert.equal(syncAuthorized({headers:{authorization:`Bearer ${secret}`}},secret),true);
  for(const value of ['',`Bearer ${'a'.repeat(64)}`,`Bearer ${'é'.repeat(64)}`])assert.equal(syncAuthorized({headers:{authorization:value}},secret),false);

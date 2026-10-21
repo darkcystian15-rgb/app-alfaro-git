@@ -1,5 +1,6 @@
 import {createHash,timingSafeEqual} from 'node:crypto';
 const knownTypes=['Casa','Departamento','Terreno','Oficina','Local Comercial','Terreno Comercial','Hotel'];
+export function canonicalSyncJson(value){if(Array.isArray(value))return '['+value.map(canonicalSyncJson).join(',')+']';if(value&&typeof value==='object')return '{'+Object.keys(value).sort().map(key=>JSON.stringify(key)+':'+canonicalSyncJson(value[key])).join(',')+'}';return JSON.stringify(value);}
 export function syncAuthorized(request,secret){const actual=Buffer.from(request.headers.authorization||''),expected=Buffer.from(`Bearer ${secret||''}`);return Boolean(secret&&secret.length>=32&&actual.length===expected.length&&timingSafeEqual(actual,expected));}
 const positive=value=>Number.isFinite(Number(value))&&Number(value)>0;
 export function validateSync(body){
@@ -19,7 +20,7 @@ export function validateSync(body){
 const escaped=value=>String(value||'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 export const syncMediaUrl=(source,id,kind='photo')=>kind==='photo'?`/api/intranet-sync?media=photo&property=${source}&id=${id}`:`/api/intranet-sync?media=banner&id=${encodeURIComponent(id)}`;
 export async function applySync(db,body,origin){
- validateSync(body);const hash=createHash('sha256').update(JSON.stringify(body)).digest('hex');
+ validateSync(body);const hash=createHash('sha256').update(canonicalSyncJson(body)).digest('hex');
  await db.beginTransaction();
  try{
   const key=body.kind==='banners'?'home':`property:${body.sourceId}`;
