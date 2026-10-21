@@ -1,0 +1,27 @@
+{
+  "database": "inmobi16_portal",
+  "backupSha256": "f22283428fbe51dc1d80aeade73a26a1f1a985f5c8626cebd9dbc70e2f63c775",
+  "backupPath": "/tmp/alfaro-permission-check/portal-before-v2-1792584315926.json",
+  "applied": [
+    "ck_property_price_nonnegative",
+    "ck_property_area_nonnegative",
+    "ck_price_basis",
+    "ck_gallery_reference_matches",
+    "ck_info_reference_matches",
+    "ck_publication_approval",
+    "public_properties",
+    "public_property_gallery",
+    "public_property_info"
+  ],
+  "checks": {
+    "approvalRequired": true,
+    "publicationVisibility": true,
+    "privateFieldsExcluded": true,
+    "relatedGalleryMatches": true,
+    "suspensionHidesAllViews": true,
+    "negativePriceRejected": true,
+    "testChangesRolledBack": true,
+    "allOriginalRowsUnchanged": true
+  },
+  "completedAt": "2026-10-21T12:05:20.485Z"
+}

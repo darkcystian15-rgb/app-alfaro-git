@@ -1,0 +1,88 @@
+{
+  "checks": {
+    "issues": [
+      {
+        "total": "2",
+        "issue_code": "empty_address_review"
+      },
+      {
+        "total": "4",
+        "issue_code": "zero_area_review"
+      },
+      {
+        "total": "6",
+        "issue_code": "orphan_property"
+      },
+      {
+        "total": "24",
+        "issue_code": "duplicate_gallery_order"
+      }
+    ],
+    "publications": {
+      "total": "64",
+      "published": "0"
+    },
+    "sourceWrites": false,
+    "productionConnectionChanged": false
+  },
+  "tables": {
+    "tipos": {
+      "sourceRows": 7,
+      "targetRows": 7,
+      "identicalOriginalFields": true
+    },
+    "asesores": {
+      "sourceRows": 7,
+      "targetRows": 7,
+      "identicalOriginalFields": true
+    },
+    "mas_info": {
+      "sourceRows": 134,
+      "targetRows": 134,
+      "identicalOriginalFields": true
+    },
+    "noticias": {
+      "sourceRows": 4,
+      "targetRows": 4,
+      "identicalOriginalFields": true
+    },
+    "articulos": {
+      "sourceRows": 4,
+      "targetRows": 4,
+      "identicalOriginalFields": true
+    },
+    "distritos": {
+      "sourceRows": 10,
+      "targetRows": 10,
+      "identicalOriginalFields": true
+    },
+    "properties": {
+      "sourceRows": 64,
+      "targetRows": 64,
+      "identicalOriginalFields": true
+    },
+    "modalidades": {
+      "sourceRows": 2,
+      "targetRows": 2,
+      "identicalOriginalFields": true
+    },
+    "redes_sociales": {
+      "sourceRows": 4,
+      "targetRows": 4,
+      "identicalOriginalFields": true
+    },
+    "sub_properties": {
+      "sourceRows": 446,
+      "targetRows": 446,
+      "identicalOriginalFields": true
+    }
+  },
+  "target": "inmobi16_portal",
+  "startedAt": "2026-10-21T12:01:05.486Z",
+  "completedAt": "2026-10-21T12:01:08.636Z",
+  "postCommit": {
+    "foreignKeys": 7,
+    "properties_count": 64,
+    "currencies_unresolved": "0"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "deployment": "dpl_9MpwTiVDn4dof8JWmFDJyzgvxnzb",
+  "commit": "0a6bf01",
+  "state": "READY",
+  "domain": "https://app-alfaro-git-smoky.vercel.app",
+  "imagesLoaded": 3,
+  "locationLinkWorks": true
+}
