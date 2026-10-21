@@ -28,4 +28,4 @@ export function contactUrl(property) {
   return `https://wa.me/${CONTACT_WHATSAPP}?text=${encodeURIComponent(message)}`;
 }
 export const shareImageUrl = (id, download = false) =>
-  `/api/property-share?id=${encodeURIComponent(id)}&format=${download ? "download" : "image"}&v=2`;
+  `/api/property-share?id=${encodeURIComponent(id)}&format=${download ? "download" : "image"}&v=3`;

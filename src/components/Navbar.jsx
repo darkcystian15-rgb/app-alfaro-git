@@ -112,9 +112,11 @@ export default function Navbar() {
         <Link
           className="nav-favorites"
           to="/favoritos"
-          aria-label={`Favoritos, ${favorites.length} guardados`}
+          aria-label={`Mi selección, ${favorites.length} guardados`}
+          title="Administrar mi selección"
         >
           <Heart size={19} />
+          <span className="selection-nav-label">Mi selección</span>
           <span>{favorites.length}</span>
         </Link>
         <button

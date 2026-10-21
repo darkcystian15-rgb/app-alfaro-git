@@ -44,7 +44,7 @@ export default function Footer() {
           <h3>Encuentra tu espacio</h3>
           <Link to="/propiedades?status=Venta">Inmuebles en venta</Link>
           <Link to="/propiedades?status=Alquiler">Inmuebles en alquiler</Link>
-          <Link to="/favoritos">Tus favoritos</Link>
+          <Link to="/favoritos">Mi selección · favoritos</Link>
           <Link to="/comparar">Comparar inmuebles</Link>
         </div>
         <div>

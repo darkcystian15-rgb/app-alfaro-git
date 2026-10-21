@@ -30,8 +30,8 @@ export function PortalProvider({ children }) {
   }, [compare]);
   useEffect(() => {
     const sync = (e) => {
-      if (e.key === "alfaro:v2:favorites") setFavorites(load("favorites"));
-      if (e.key === "alfaro:v2:compare") setCompare(load("compare"));
+      if (e.key === null || e.key === "alfaro:v2:favorites") setFavorites(load("favorites"));
+      if (e.key === null || e.key === "alfaro:v2:compare") setCompare(load("compare"));
     };
     window.addEventListener("storage", sync);
     return () => window.removeEventListener("storage", sync);
@@ -64,6 +64,7 @@ export function PortalProvider({ children }) {
         toggleFavorite,
         toggleCompare,
         clearCompare: () => setCompare([]),
+        clearFavorites: () => setFavorites([]),
       }}
     >
       {children}
