@@ -1,0 +1,14 @@
+{
+  "checkedAt": "2026-10-21T22:06:01.235595+00:00",
+  "repository": "darkcystian15-rgb/app-alfaro-git",
+  "branch": "main",
+  "localSha": "0f271267ce2fcb19f19b1d21e6d1d03c3aa03b86",
+  "githubSha": "0f271267ce2fcb19f19b1d21e6d1d03c3aa03b86",
+  "vercelSha": "0f271267ce2fcb19f19b1d21e6d1d03c3aa03b86",
+  "deploymentId": "dpl_2sgBJS2E4amc82TWYiyaxCax63K8",
+  "readyState": "READY",
+  "target": "production",
+  "domain": "https://app-alfaro-git-smoky.vercel.app",
+  "aliasPointsToDeployment": true,
+  "cleanWorktree": false
+}

@@ -144,14 +144,57 @@ distinto de los dos requisitos expresamente excluidos por el usuario.
   de ejecución y cero solicitudes de escritura.
 - No se enviaron formularios ni mensajes reales.
 
-La evidencia de navegador y despliegue se incorporará tras comprobar la publicación.
-Un build o un check Preview aprobado no se presenta como producción comprobada.
+El navegador también comprobó el dominio público después de publicar: catálogo,
+favoritos, comparación, galería por teclado, descarga real de PDF y JPG, rutas
+institucionales y pantallas de 375, 768 y 1440 px. No hubo errores de ejecución ni
+solicitudes de escritura. Las pruebas de fallos HTTP, vacío e imágenes rotas usan
+fixtures aisladas dentro del navegador; no se provocaron fallos en la base real.
+
+## Publicación comprobada y alineación
+
+- [PR #4](https://github.com/darkcystian15-rgb/app-alfaro-git/pull/4) integrado en `main`.
+- Código de continuación: `8733c44eaec79bf0fcab3da50b5bd7ff3c8cd66f`.
+- Commit de integración verificado en GitHub, Codespaces Dark y Vercel:
+  `0f271267ce2fcb19f19b1d21e6d1d03c3aa03b86`.
+- Production: `dpl_2sgBJS2E4amc82TWYiyaxCax63K8`, estado `READY`.
+- Dominio público: https://app-alfaro-git-smoky.vercel.app, alias comprobado por API
+  apuntando al mismo despliegue, no solo a una URL temporal de Preview.
+- Comprobación HTTP del 21 de octubre a las 22:05 UTC: 64 IDs conservados,
+  8 destacados, todas las fichas y sus informaciones/galerías, APIs editoriales,
+  metadatos para WhatsApp, `no-store` y ausencia del campo de propietario aprobados.
+- Comprobación de SHA y alias a las 22:06 UTC. La evidencia registra checkout con
+  archivos pendientes porque se estaban agregando precisamente las evidencias de
+  publicación, sin cambios de código ejecutable.
+
+Esta documentación y los resultados públicos se incorporan mediante un commit
+documental posterior. Tras subirlo a `main`, se verifica nuevamente la igualdad
+entre GitHub, Codespaces Dark y el despliegue Production del dominio. La evidencia
+JSON enlazada conserva el SHA y la hora del primer despliegue comprobado; no se
+reescribe retroactivamente para atribuirle el commit que contiene esa evidencia.
+
+No se modificaron variables de Vercel ni se ampliaron credenciales a Preview.
+La publicación utiliza la integración Git existente del fork. El checkout de
+Cystian y la intranet en otras carpetas del workspace no se sustituyeron.
+
+### Recuperación
+
+El despliegue anterior de `main`, `dpl_HXinLmuusEqfvhqN97N4pT5VJ9Ev` con código
+`90f734a`, se conserva en el historial de Vercel. La conciliación actual es aditiva:
+no cambia los campos heredados ni los contratos que consulta ese código, por lo
+que una recuperación de código no necesita reinstalar ni copiar la base original.
+Si fuera necesario revertir referencias de catálogos, comparar con el respaldo
+cifrado previo y limitar la restauración a los campos modificados, preservando
+cambios comerciales posteriores. No restaurar masivamente un snapshot sobre el portal.
+No se ensayó una recuperación de infraestructura o fotografías remotas.
 
 ## Evidencias y continuidad
 
 - [Conciliación aplicada: conteos anteriores y posteriores](evidencia-fase3/CONCILIACION-APLICADA-2026-10-21.json).
 - [Restauración local y flujo de publicación](evidencia-fase3/RESTAURACION-Y-FLUJO-2026-10-21.json).
 - [Navegador sobre compilación local](evidencia-fase3/NAVEGADOR-LOCAL-2026-10-21.json).
+- [Comprobación HTTP en producción](evidencia-fase3/PRODUCCION-HTTP-2026-10-21.json).
+- [Navegador en producción](evidencia-fase3/NAVEGADOR-PRODUCCION-2026-10-21.json).
+- [SHA y alias del despliegue comprobado](evidencia-fase3/DESPLIEGUE-VERIFICADO-2026-10-21.json).
 - [Entrega previa de seguridad](CONTINUIDAD-FASE-3-SEGURIDAD-2026-10-21.md).
 - [Avance anterior de base e interfaz](AVANCES-PORTAL-FASE-3-2026-10-21.md).
 
