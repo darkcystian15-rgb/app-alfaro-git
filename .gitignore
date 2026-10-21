@@ -4,3 +4,9 @@ node_modules
 .env
 Use current git remote origin
 .vercel
+
+# Configuración privada y copias de operación
+.env.*
+*.backup.enc
+*.key
+portal-private/

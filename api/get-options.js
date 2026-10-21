@@ -38,7 +38,7 @@ export default async function handler(req, res) {
     console.error("❌ Error en la función getData:", error);
     res.status(500).json({
       error: "Error al obtener datos desde la base de datos",
-      detalle: error.message,
+      detalle: "Servicio temporalmente no disponible",
     });
   }
 }

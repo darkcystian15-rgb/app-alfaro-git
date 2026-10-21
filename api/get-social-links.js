@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     console.error("❌ Error MySQL redes_sociales:", error);
     res.status(500).json({
       error: "Error al conectar a la BD",
-      detalle: error.message,
+      detalle: "Servicio temporalmente no disponible",
     });
   }
 }

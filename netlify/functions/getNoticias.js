@@ -63,7 +63,7 @@ export async function handler(event) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         message: "Error al traer noticias",
-        error: error.message,
+        error: "No se pudo completar la consulta",
       }),
     };
   }

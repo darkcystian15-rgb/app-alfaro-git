@@ -1,6 +1,7 @@
 import DOMPurify from "dompurify";
 // src/components/PropertyDetails.jsx
 import React from "react";
+import { formatPrice } from "../config/site";
 
 const PropertyDetails = ({ propData }) => {
   const lat = propData.latitude;
@@ -33,10 +34,7 @@ const PropertyDetails = ({ propData }) => {
         <div className="flex justify-center items-center gap-2 mb-2">
           <img src="/precio.png" alt="Precio" className="w-5 h-5" />
           <p className="font-semibold text-blue-600">
-            S/{" "}
-            {Number(propData.price).toLocaleString("es-PE", {
-              minimumFractionDigits: 2,
-            })}
+            {formatPrice(propData.price, propData.moneda)}
           </p>
         </div>
       )}
@@ -45,7 +43,7 @@ const PropertyDetails = ({ propData }) => {
       <div className="flex justify-center items-center gap-6 mb-3 text-sm">
         <div className="flex items-center gap-1">
           <img src="/area.png" alt="Área" className="w-5 h-5" />
-          <span>{propData.area} m²</span>
+          <span>{Number(propData.area) > 0 ? `${Number(propData.area).toLocaleString("es-PE")} m²` : "Área por consultar"}</span>
         </div>
         <div className="flex items-center gap-1">
           <img src="/dormi.png" alt="Dormitorios" className="w-5 h-5" />

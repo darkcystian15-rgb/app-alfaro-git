@@ -1,8 +1,8 @@
+// Diagnóstico heredado deshabilitado: no exponer configuración privada.
 export async function handler() {
   return {
-    statusCode: 200,
-    body: JSON.stringify({
-      NEON_DB_URL: process.env.NEON_DB_URL || "NO DEFINIDA",
-    }),
+    statusCode: 410,
+    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+    body: JSON.stringify({ error: "Diagnóstico retirado" }),
   };
 }

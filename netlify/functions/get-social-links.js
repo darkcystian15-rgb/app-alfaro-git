@@ -17,7 +17,7 @@ export async function handler() {
     console.error("❌ Error MySQL redes_sociales:", error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "Error al conectar a la BD", detalle: error.message }),
+      body: JSON.stringify({ error: "Error al conectar a la BD", detalle: "Servicio temporalmente no disponible" }),
     };
   }
 }

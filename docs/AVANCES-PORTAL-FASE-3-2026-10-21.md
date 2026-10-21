@@ -1,5 +1,7 @@
 # Portal Alfaro · Avances de fase 3
 
+Continuación del 21 de octubre: [Seguridad, auditoría real y respaldo cifrado](CONTINUIDAD-FASE-3-SEGURIDAD-2026-10-21.md). Cambios preparados en rama; no equivalen a cierre de fase 3 ni a publicación en Production.
+
 > **Corte de esta entrega:** 21 de octubre de 2026, UTC.
 >
 > **Estado:** nueva base integrada en Production y sección de ubicaciones rediseñada.
