@@ -1,0 +1,36 @@
+{
+  "applicationCommit": "8031eba7e0d474c6b23e9c32f15e3fae9b50e64a",
+  "stagedDeployment": "dpl_HgAjQ7XCVhU7JraYCd92vfD5ofRf",
+  "stagedSelection": {
+    "base": "https://app-alfaro-pibi2ljqh-puma19.vercel.app",
+    "results": [
+      "Portada y destacados avanzan automáticamente; pausa real y navegación circular funcionan",
+      "Movimiento reducido inicia ambos carruseles pausados; gesto horizontal cambia portada y desplazamiento vertical no la cambia",
+      "Administración: persistencia, corazones, comparación, límite 10, elección individual, nota no persistente, mensaje correcto, vaciado con confirmación y móvil sin desbordamiento",
+      "Guardados retirados del catálogo se explican y se excluyen de WhatsApp"
+    ],
+    "errors": [],
+    "writes": [],
+    "checkedAt": "2026-10-21T00:30:19.020Z"
+  },
+  "stagedRegression": {
+    "base": "https://app-alfaro-pibi2ljqh-puma19.vercel.app",
+    "uiOnly": false,
+    "results": [
+      "All featured properties reachable; hero and featured carousels controlled",
+      "Real catalogue, numbered pagination and URL state",
+      "Favorites persist after reload; comparison capped at three and displays actual fields",
+      "Multiple districts, shareable filter URL, reload and clearing chips",
+      "Price filters respect explicit currency and empty results",
+      "Property detail returns to original search and pagination",
+      "Gallery opens and closes by keyboard; institutional WhatsApp includes canonical property URL",
+      "WhatsApp crawler receives server metadata; real JPG 1200x630 and branded PDF downloads succeed",
+      "Institutional routes and mobile overflow checked; offering prepares WhatsApp without sending or POST",
+      "HTTP failure/retry, empty results, broken images and HTML sanitization verified with isolated fixtures"
+    ],
+    "runtimeErrors": [],
+    "outboundWrites": []
+  },
+  "unitCaseDefinitions": 17,
+  "logoOriginalSha256": "2f3d5847ad4c701c73813d254b333a81315810a0789f84f48fd1b03006f84199"
+}

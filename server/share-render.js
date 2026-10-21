@@ -65,7 +65,7 @@ export function shareHtml(property) {
       .map(textOnly)
       .join(" · "),
     url = absolutePropertyUrl(property.id),
-    image = `${SITE_URL}/api/property-share?id=${encodeURIComponent(property.id)}&format=image&v=2`;
+    image = `${SITE_URL}/api/property-share?id=${encodeURIComponent(property.id)}&format=image&v=3`;
   return `<!doctype html><html lang="es" prefix="og: https://ogp.me/ns#"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(title)}</title><meta name="description" content="${escapeHtml(description)}"><link rel="canonical" href="${escapeHtml(url)}"><meta property="og:type" content="website"><meta property="og:locale" content="es_PE"><meta property="og:site_name" content="Inmobiliaria Alberto Alfaro"><meta property="og:title" content="${escapeHtml(title)}"><meta property="og:description" content="${escapeHtml(description)}"><meta property="og:url" content="${escapeHtml(url)}"><meta property="og:image" content="${escapeHtml(image)}"><meta property="og:image:secure_url" content="${escapeHtml(image)}"><meta property="og:image:type" content="image/jpeg"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="${escapeHtml(property.title)} · Alberto Alfaro"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${escapeHtml(title)}"><meta name="twitter:description" content="${escapeHtml(description)}"><meta name="twitter:image" content="${escapeHtml(image)}"></head><body><h1>${escapeHtml(property.title)}</h1><p>${escapeHtml(description)}</p><p>${escapeHtml(formatPrice(property.price, property.moneda))}</p><a href="${escapeHtml(url)}">Ver la ficha del inmueble</a></body></html>`;
 }
 export async function fetchPublicImage(value, { fetcher = fetch } = {}) {
@@ -138,7 +138,7 @@ function outlinedText(value, x, y, size, color, bold = false) {
 }
 export async function renderShareImage(
   property,
-  { imageBuffer, fetcher } = {},
+  { imageBuffer, fetcher, brandCover = false } = {},
 ) {
   let picture = null;
   try {
@@ -147,7 +147,10 @@ export async function renderShareImage(
     if (input)
       picture = await sharp(input, { limitInputPixels: 32000000 })
         .rotate()
-        .resize(710, 630, { fit: "contain", background: "#e3e8dc" })
+        .resize(710, 630, {
+          fit: brandCover ? "cover" : "contain",
+          background: "#e3e8dc",
+        })
         .jpeg({ quality: 84 })
         .toBuffer();
   } catch {
@@ -166,7 +169,7 @@ export async function renderShareImage(
     .join(" · ");
   // All text is converted to vector paths with bundled fonts, independent of OS fonts.
   const panel = Buffer.from(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630"><rect x="710" width="490" height="630" fill="#f5f3ee"/><rect x="710" width="7" height="630" fill="#cf1830"/><path d="M756 75 776 55l11 11M775 75l21-27 18 22" fill="none" stroke="#cf1830" stroke-width="5"/>${outlinedText("ALBERTO ALFARO", 830, 62, 19, "#202321", true)}${outlinedText("I N M O B I L I A R I A", 831, 80, 9, "#68765c")}<rect x="756" y="123" width="160" height="28" rx="2" fill="#e8e9e1"/>${outlinedText(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630"><rect x="710" width="490" height="630" fill="#f5f3ee"/><rect x="710" width="7" height="630" fill="#cf1830"/><rect x="756" y="123" width="160" height="28" rx="2" fill="#e8e9e1"/>${outlinedText(
       String(property.status || "INMUEBLE")
         .toUpperCase()
         .slice(0, 20),
@@ -175,7 +178,7 @@ export async function renderShareImage(
       13,
       "#556448",
       true,
-    )}${outlinedText(formatPrice(property.price, property.moneda), 756, 209, 34, "#cf1830", true)}${title.map((line, i) => outlinedText(line, 756, 263 + i * 33, 23, "#202321", true)).join("")}${location.map((line, i) => outlinedText(line, 756, 426 + i * 23, 17, "#6c7b5f")).join("")}<line x1="756" y1="492" x2="1154" y2="492" stroke="#d5dccd"/>${outlinedText(features, 756, 525, 15, "#556a44")}${outlinedText("VER FICHA · CONSULTAR · COORDINAR VISITA", 756, 582, 12, "#6b805a")}<rect y="624" width="710" height="6" fill="#cf1830"/></svg>`,
+    )}${outlinedText(brandCover ? "Encuentra tu lugar" : formatPrice(property.price, property.moneda), 756, 209, brandCover ? 30 : 34, "#cf1830", true)}${title.map((line, i) => outlinedText(line, 756, 263 + i * 33, 23, "#202321", true)).join("")}${location.map((line, i) => outlinedText(line, 756, 426 + i * 23, 17, "#6c7b5f")).join("")}<line x1="756" y1="492" x2="1154" y2="492" stroke="#d5dccd"/>${outlinedText(features, 756, 525, 15, "#556a44")}${outlinedText("VER FICHA · CONSULTAR · COORDINAR VISITA", 756, 582, 12, "#6b805a")}<rect y="624" width="710" height="6" fill="#cf1830"/></svg>`,
   );
   const base = sharp({
     create: { width: 1200, height: 630, channels: 3, background: "#e3e8dc" },
@@ -191,8 +194,18 @@ export async function renderShareImage(
           top: 0,
         },
       ];
+  const officialLogo = await sharp(
+    readFileSync(path.join(process.cwd(), "server", "assets", "logo.png")),
+  )
+    .resize(270, 98, { fit: "contain", background: "#ffffff" })
+    .png()
+    .toBuffer();
   return base
-    .composite([...layers, { input: panel, left: 0, top: 0 }])
+    .composite([
+      ...layers,
+      { input: panel, left: 0, top: 0 },
+      { input: officialLogo, left: 756, top: 12 },
+    ])
     .jpeg({ quality: 87, mozjpeg: true })
     .toBuffer();
 }

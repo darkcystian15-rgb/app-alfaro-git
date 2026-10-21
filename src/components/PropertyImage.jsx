@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ImageOff } from "lucide-react";
-import { BrandMark } from "./Brand";
+
 export default function PropertyImage({
   src,
   alt = "",
@@ -30,10 +30,13 @@ export default function PropertyImage({
       </div>
       {signature && (
         <figcaption className="photo-signature">
-          <BrandMark />
-          <span>
-            ALBERTO ALFARO <i>INMOBILIARIA</i>
-          </span>
+          <img
+            className="signature-original"
+            src="/logo.png"
+            alt="Alberto Alfaro Inmobiliaria"
+            width="640"
+            height="232"
+          />
           <span className="signature-rule" />
         </figcaption>
       )}

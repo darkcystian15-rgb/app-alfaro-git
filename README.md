@@ -9,6 +9,8 @@ comparación y tarjetas para compartir por WhatsApp. La fase 3 queda por planear
 
 ## Documentación vigente
 
+- [Mi selección, carruseles y logo original](docs/SELECCION-CARRUSELES-LOGO.md).
+
 - [Entrega, pruebas y despliegue](docs/ENTREGA-PORTAL-VISUAL-V2.md).
 - [Alcance de las fases 1 y 2](docs/PLAN-PORTAL-VISUAL-V2.md).
 - [Fotografías, PDF y tarjetas de WhatsApp](docs/TARJETAS-WHATSAPP-Y-FOTOGRAFIAS.md).

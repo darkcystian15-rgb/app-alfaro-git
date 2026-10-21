@@ -8,7 +8,7 @@
     "preview": "vite preview",
     "deploy": "npm run build && netlify deploy --prod --dir=dist",
     "quickpush": "git add . && (git diff --cached --quiet && echo '⚠️ No hay cambios para subir' || git commit -m 'update') && git pull --no-rebase origin main && git push origin main && echo '✅ Cambios enviados correctamente 🚀'",
-    "test": "node --test tests/portal.test.mjs tests/visual-v2.test.mjs",
+    "test": "node --test tests/portal.test.mjs tests/visual-v2.test.mjs tests/selection.test.mjs",
     "test:browser": "node tests/portal.browser.mjs",
     "preview:readonly": "node tests/portal-preview.mjs"
   },

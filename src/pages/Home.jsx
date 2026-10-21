@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowUpRight,
@@ -12,6 +12,7 @@ import {
   Handshake,
   ChevronRight,
 } from "lucide-react";
+import useCarouselPlayback from "../hooks/useCarouselPlayback";
 import SearchBanner from "../components/SearchBanner";
 import FeaturedProperties from "../components/FeaturedProperties";
 import ContactForm from "../components/ContactForm";
@@ -25,18 +26,17 @@ const scenes = [
 ];
 export default function Home() {
   const [slide, setSlide] = useState(0),
-    [paused, setPaused] = useState(
-      () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-    ),
     { items } = useProperties();
+  const { paused, setPaused, playing, interaction } = useCarouselPlayback();
+  const touchStart = useRef(null);
   useEffect(() => {
-    if (paused) return;
+    if (!playing) return;
     const interval = setInterval(
       () => setSlide((i) => (i + 1) % scenes.length),
       7000,
     );
     return () => clearInterval(interval);
-  }, [paused]);
+  }, [playing]);
   const locations = Object.entries(
     items.reduce((acc, p) => {
       if (p.location) acc[p.location] = (acc[p.location] || 0) + 1;
@@ -79,8 +79,38 @@ export default function Home() {
               </span>
             </div>
           </div>
-          <div className="hero-media">
-            <div className="hero-photo-stack">
+          <div
+            className="hero-media"
+            {...interaction}
+            aria-roledescription="carrusel"
+            aria-label="Imágenes de portada"
+          >
+            <div
+              className="hero-photo-stack"
+              onTouchStart={(e) => {
+                touchStart.current = {
+                  x: e.touches[0].clientX,
+                  y: e.touches[0].clientY,
+                };
+                setPaused(true);
+              }}
+              onTouchEnd={(e) => {
+                if (touchStart.current === null) return;
+                const delta =
+                  e.changedTouches[0].clientX - touchStart.current.x;
+                const vertical =
+                  e.changedTouches[0].clientY - touchStart.current.y;
+                touchStart.current = null;
+                if (
+                  Math.abs(delta) > 40 &&
+                  Math.abs(delta) > Math.abs(vertical)
+                )
+                  setSlide(
+                    (i) =>
+                      (i + (delta < 0 ? 1 : scenes.length - 1)) % scenes.length,
+                  );
+              }}
+            >
               {scenes.map((scene, i) => (
                 <img
                   key={scene.image}
@@ -98,9 +128,10 @@ export default function Home() {
             <div className="hero-navigation">
               <button
                 aria-label="Imagen anterior"
-                onClick={() =>
-                  setSlide((i) => (i + scenes.length - 1) % scenes.length)
-                }
+                onClick={() => {
+                  setPaused(true);
+                  setSlide((i) => (i + scenes.length - 1) % scenes.length);
+                }}
               >
                 <ArrowLeft size={16} />
               </button>
@@ -110,7 +141,10 @@ export default function Home() {
                     key={s.image}
                     aria-label={"Ver imagen " + (i + 1)}
                     aria-current={i === slide ? "true" : undefined}
-                    onClick={() => setSlide(i)}
+                    onClick={() => {
+                      setPaused(true);
+                      setSlide(i);
+                    }}
                   />
                 ))}
               </div>
@@ -122,7 +156,10 @@ export default function Home() {
               </button>
               <button
                 aria-label="Imagen siguiente"
-                onClick={() => setSlide((i) => (i + 1) % scenes.length)}
+                onClick={() => {
+                  setPaused(true);
+                  setSlide((i) => (i + 1) % scenes.length);
+                }}
               >
                 <ArrowRight size={16} />
               </button>

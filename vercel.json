@@ -41,7 +41,7 @@
   ],
   "functions": {
     "api/property-share.js": {
-      "includeFiles": "server/fonts/**"
+      "includeFiles": "{server/fonts/**,server/assets/**}"
     }
   }
 }
