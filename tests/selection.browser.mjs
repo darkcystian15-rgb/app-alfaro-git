@@ -108,29 +108,56 @@ try {
   await page
     .getByRole("button", { name: "Reproducir portada", exact: true })
     .waitFor();
+  const swipe = async (x, y) =>
+    page.locator(".hero-photo-stack").evaluate(
+      (el, end) => {
+        el.dispatchEvent(
+          new TouchEvent("touchstart", {
+            bubbles: true,
+            touches: [
+              new Touch({
+                identifier: 1,
+                target: el,
+                clientX: 270,
+                clientY: 100,
+              }),
+            ],
+          }),
+        );
+        el.dispatchEvent(
+          new TouchEvent("touchend", {
+            bubbles: true,
+            changedTouches: [
+              new Touch({
+                identifier: 1,
+                target: el,
+                clientX: end.x,
+                clientY: end.y,
+              }),
+            ],
+          }),
+        );
+      },
+      { x, y },
+    );
   const labelBeforeSwipe = await page.locator(".hero-photo-label").innerText();
-  await page
-    .locator(".hero-photo-stack")
-    .dispatchEvent("touchstart", { touches: [{ clientX: 270, clientY: 100 }] });
-  await page.locator(".hero-photo-stack").dispatchEvent("touchend", {
-    changedTouches: [{ clientX: 100, clientY: 105 }],
-  });
+  await swipe(100, 105);
   assert.notEqual(
     await page.locator(".hero-photo-label").innerText(),
     labelBeforeSwipe,
   );
   const afterSwipe = await page.locator(".hero-photo-label").innerText();
-  await page
-    .locator(".hero-photo-stack")
-    .dispatchEvent("touchstart", { touches: [{ clientX: 270, clientY: 100 }] });
-  await page.locator(".hero-photo-stack").dispatchEvent("touchend", {
-    changedTouches: [{ clientX: 210, clientY: 400 }],
-  });
+  await swipe(210, 400);
   assert.equal(await page.locator(".hero-photo-label").innerText(), afterSwipe);
   results.push(
     "Movimiento reducido inicia ambos carruseles pausados; gesto horizontal cambia portada y desplazamiento vertical no la cambia",
   );
-  const response = await page.request.get(base + "/api/getProperties");
+  const response = await page.request.get(base + "/api/getProperties", {
+    headers,
+    maxRedirects: 0,
+  });
+  assert.equal(response.status(), 200);
+  assert.match(response.headers()["content-type"], /json/);
   const rows = await response.json();
   assert.ok(rows.length >= 12);
   const ids = rows.slice(0, 12).map((p) => String(p.id));

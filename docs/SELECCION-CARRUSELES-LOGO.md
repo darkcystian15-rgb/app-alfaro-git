@@ -61,8 +61,22 @@ no impiden la compilación. No se atribuye una medición Lighthouse inexistente.
 
 ## Publicación
 
-Validación del despliegue y alineación GitHub/Vercel: se registrarán al completar
-las comprobaciones remotas, antes de dar la entrega por terminada.
+Código de la aplicación validado: `8031eba7e0d474c6b23e9c32f15e3fae9b50e64a`.
+PR: https://github.com/darkcystian15-rgb/app-alfaro-git/pull/3.
+
+Despliegue de validación Vercel **READY**:
+`dpl_HgAjQ7XCVhU7JraYCd92vfD5ofRf`,
+https://app-alfaro-pibi2ljqh-puma19.vercel.app.
+La URL de validación mantiene la protección existente; no contiene credenciales.
+Ambas pruebas Chromium completas han pasado contra ese despliegue, incluidas
+la generación serverless de imagen con el logo original empaquetado y las
+descargas JPG/PDF. Cero errores de JavaScript y cero escrituras de negocio.
+
+Las correcciones posteriores de la simulación táctil y autenticación de la
+herramienta de prueba no cambian el código de la aplicación validada.
+Se integra este PR en `main` para que la integración GitHub de Vercel publique
+el mismo código. La comprobación de la dirección pública se realiza después de
+integrarlo y se registra al cerrar la entrega.
 
 Proyecto Vercel fijado: `prj_W5ADa1iBP42vjncafADM4jm8QBWk`, equipo `puma19`.
 Se mantienen credenciales y alcance Production existentes. No se modifican Cystian,
