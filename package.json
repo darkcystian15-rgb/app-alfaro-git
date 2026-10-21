@@ -12,7 +12,10 @@
     "test:browser": "node tests/portal.browser.mjs",
     "preview:readonly": "node tests/portal-preview.mjs",
     "test:database": "node tests/database.integration.mjs",
-    "test:phase3": "node --test tests/phase3-operations.test.mjs",
+    "test:phase3": "node --test tests/phase3-operations.test.mjs tests/publication-workflow.test.mjs",
+    "publications": "node scripts/publicaciones.mjs",
+    "phase3:complete": "node scripts/complete-phase3.mjs",
+    "test:phase3:integration": "node tests/phase3-restore.integration.mjs",
     "audit:portal": "node scripts/auditar-portal-f3.mjs",
     "backup:portal": "node scripts/respaldar-portal-f3.mjs"
   },

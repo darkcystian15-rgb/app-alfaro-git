@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-21T22:00:26.205Z",
+  "isolated": true,
+  "restored": {
+    "tables": {
+      "articulos": 4,
+      "asesores": 7,
+      "currencies": 2,
+      "distritos": 10,
+      "mas_info": 134,
+      "migration_issues": 36,
+      "migration_runs": 1,
+      "modalidades": 2,
+      "noticias": 4,
+      "properties": 64,
+      "publications": 64,
+      "redes_sociales": 4,
+      "sub_properties": 446,
+      "tipos": 7
+    },
+    "views": 3,
+    "fullRowsVerified": true
+  },
+  "reconciled": {
+    "applied": true,
+    "assigned": {
+      "property_type_id": 54,
+      "modality_id": 64,
+      "district_id": 64
+    },
+    "typeReview": [
+      3,
+      19,
+      24,
+      25,
+      26,
+      38,
+      50,
+      56,
+      62,
+      64
+    ],
+    "orphanGalleryQuarantined": 6
+  },
+  "idempotent": true,
+  "workflow": {
+    "suspend": true,
+    "withdraw": true,
+    "pending": true,
+    "publish": true,
+    "staleStateRejected": true,
+    "approvalRequired": true,
+    "events": 4
+  },
+  "productionWrites": false
+}

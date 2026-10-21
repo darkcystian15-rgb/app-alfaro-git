@@ -5,10 +5,13 @@ las funciones Vercel existentes. Sitio: https://app-alfaro-git-smoky.vercel.app.
 
 La entrega vigente es el rediseño conjunto de las nuevas fases 1 y 2: portada,
 catálogo, búsqueda múltiple, fotografías de marca, ficha, favoritos locales,
-comparación y tarjetas para compartir por WhatsApp. La fase 3 queda por planear.
+comparación y tarjetas para compartir por WhatsApp. La fase 3 incorpora la base
+independiente, seguridad, conciliación conservadora y operación privada de publicaciones.
 
 ## Documentación vigente
 
+- [Avance de fase 3, pendientes y publicación del 21 de octubre](docs/AVANCE-FASE-3-CIERRE-2026-10-21.md).
+- [Operación privada de publicaciones](docs/OPERACION-PUBLICACIONES.md).
 - [Mi selección, carruseles y logo original](docs/SELECCION-CARRUSELES-LOGO.md).
 
 - [Entrega, pruebas y despliegue](docs/ENTREGA-PORTAL-VISUAL-V2.md).

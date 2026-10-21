@@ -4,7 +4,9 @@ import assert from 'node:assert/strict';
 import mysql from 'mysql2/promise';
 import { pathToFileURL } from 'node:url';
 const v = JSON.parse(await fs.readFile(process.env.PORTAL_DB_CONFIG, 'utf8'));
-const db = await mysql.createConnection({host:v.DB_HOST,port:Number(v.DB_PORT),user:v.DB_USER,password:v.DB_PASSWORD,database:'inmobi16_portal'});
+assert.ok(['127.0.0.1','localhost','::1'].includes(v.DB_HOST), 'Integración solo en MySQL local aislado');
+assert.match(v.DB_NAME, /^alfaro_restore_[a-z0-9_]+$/);
+const db = await mysql.createConnection({host:v.DB_HOST,port:Number(v.DB_PORT),user:v.DB_USER,password:v.DB_PASSWORD,database:v.DB_NAME});
 const ids = JSON.parse(await fs.readFile(process.env.PORTAL_PUBLIC_IDS, 'utf8'));
 globalThis.__portalIntegrationPool = db;
 async function load(name) {
@@ -42,5 +44,5 @@ try {
  assert.deepEqual((await invoke('getPropertyDetailInfo',{id:String(id)})).body,[]);
  assert.equal((await invoke('property-share',{id:String(id)})).statusCode,404);
  assert.ok(!(await invoke('getProperties')).body.some(x=>x.id===id));
- console.log(JSON.stringify({database:'inmobi16_portal',catalog:ids.length,featured:8,allDetailsAndInfo:true,filters:true,editorialApis:true,shareHtmlAndImage:true,suspension:true,privateFieldsExcluded:true,rollback:true}));
+ console.log(JSON.stringify({database:'isolated_local',catalog:ids.length,featured:8,allDetailsAndInfo:true,filters:true,editorialApis:true,shareHtmlAndImage:true,suspension:true,privateFieldsExcluded:true,rollback:true}));
 } finally {await db.rollback();await db.end();delete globalThis.__portalIntegrationPool;}

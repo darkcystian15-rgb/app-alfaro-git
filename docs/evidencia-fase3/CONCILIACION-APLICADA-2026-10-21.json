@@ -1,0 +1,57 @@
+{
+  "date": "2026-10-21T21:58:55.192Z",
+  "database": "inmobi16_portal",
+  "before": {
+    "orphanGallery": 6,
+    "orphanInfo": 0,
+    "zeroOrMissingArea": 4,
+    "emptyAddress": 2,
+    "missingType": 64,
+    "missingModality": 64,
+    "missingDistrict": 64,
+    "unknownCurrency": 0,
+    "missingPublication": 0,
+    "invalidApproval": 0,
+    "invalidGalleryReference": 0,
+    "invalidInfoReference": 0
+  },
+  "after": {
+    "orphanGallery": 6,
+    "orphanInfo": 0,
+    "zeroOrMissingArea": 4,
+    "emptyAddress": 2,
+    "missingType": 10,
+    "missingModality": 0,
+    "missingDistrict": 0,
+    "unknownCurrency": 0,
+    "missingPublication": 0,
+    "invalidApproval": 0,
+    "invalidGalleryReference": 0,
+    "invalidInfoReference": 0
+  },
+  "assigned": {
+    "property_type_id": 54,
+    "modality_id": 64,
+    "district_id": 64
+  },
+  "typeReview": [
+    3,
+    19,
+    24,
+    25,
+    26,
+    38,
+    50,
+    56,
+    62,
+    64
+  ],
+  "publications": [
+    {
+      "publication_status": "published",
+      "total": "64"
+    }
+  ],
+  "orphanDisposition": "Preserved, quarantined by public views; no guessed reassignment",
+  "personalDataIncluded": false
+}
