@@ -22,7 +22,9 @@ export const textOnly = (value) =>
     .trim();
 export function safeImageUrl(value) {
   try {
-    const url = new URL(String(value).trim());
+    const raw=String(value).trim();
+    const url = new URL(raw,SITE_URL);
+    if(url.origin===new URL(SITE_URL).origin && url.pathname==='/api/intranet-sync' && url.searchParams.get('media')==='photo' && /^[1-9]\d*$/.test(url.searchParams.get('property')||'') && /^[1-9]\d*$/.test(url.searchParams.get('id')||'') && !url.username && !url.password)return url.href;
     return url.protocol === "https:" &&
       url.hostname === "media.inmobiliariaalbertoalfaro.com.pe" &&
       (!url.port || url.port === "443") &&

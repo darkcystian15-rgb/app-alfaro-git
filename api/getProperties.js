@@ -90,14 +90,15 @@ export default async function handler(req, res) {
 
       // 🔹 Terreno puro (solo si se seleccionó "terreno" a secas)
       if (applyPureTerrenoRule) {
-        conditions.push(`(LOWER(title) LIKE ? AND LOWER(title) NOT LIKE '%comercial%' AND LOWER(title) NOT LIKE '%industrial%')`);
+        conditions.push(`((LOWER(title) LIKE ? AND LOWER(title) NOT LIKE '%comercial%' AND LOWER(title) NOT LIKE '%industrial%') OR EXISTS (SELECT 1 FROM properties typed JOIN tipos typ ON typ.id=typed.property_type_id WHERE typed.id=public_properties.id AND LOWER(typ.nombre)='terreno'))`);
         queryParams.push("%terreno%");
       }
 
       // 🔹 Otros títulos seleccionados (incluyendo mapeados)
       if (expandedTitleArr.length) {
         expandedTitleArr.forEach(t => {
-          conditions.push(`LOWER(title) LIKE ?`);
+          conditions.push(`(LOWER(title) LIKE ? OR EXISTS (SELECT 1 FROM properties typed JOIN tipos typ ON typ.id=typed.property_type_id WHERE typed.id=public_properties.id AND LOWER(typ.nombre) LIKE ?))`);
+          queryParams.push(`%${t.toLowerCase()}%`);
           queryParams.push(`%${t.toLowerCase()}%`);
         });
       }

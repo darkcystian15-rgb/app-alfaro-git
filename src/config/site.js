@@ -4,7 +4,7 @@ export const propertyUrl = (id) =>
   `/propiedades/resumen/${encodeURIComponent(id)}`;
 export const absolutePropertyUrl = (id) => SITE_URL + propertyUrl(id);
 export const currencyCode = (value) =>
-  /^(PEN|S\/\.?|sol(?:es)?)$/i.test(String(value || "").trim())
+  /^(PEN|S\/\.?|sol(?:es)?)(?: c\/u)?$/i.test(String(value || "").trim())
     ? "PEN"
     : /^(USD|US\$(?: c\/u)?|\$|d[oó]lares?)$/i.test(String(value || "US$").trim())
       ? "USD"

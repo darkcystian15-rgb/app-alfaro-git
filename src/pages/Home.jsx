@@ -24,12 +24,14 @@ const locationImages = {
   chimbote: "/portal/location-chimbote-v1.webp",
   casma: "/portal/location-casma-v1.webp",
 };
-const scenes = [
+const defaultScenes = [
   { image: "/portal/hero-living.webp", label: "Espacios para vivir" },
   { image: "/portal/hero-spaces.webp", label: "Lugares para crecer" },
   { image: "/portal/hero-beginnings.webp", label: "Nuevos comienzos" },
 ];
 export default function Home() {
+  const [scenes,setScenes] = useState(defaultScenes);
+  useEffect(()=>{const controller=new AbortController();fetch('/api/intranet-sync?content=home',{signal:controller.signal}).then(r=>r.ok?r.json():null).then(data=>{if(Array.isArray(data?.banners)&&data.banners.length){setSlide(0);setScenes(data.banners);}}).catch(()=>{});return()=>controller.abort();},[]);
   const [slide, setSlide] = useState(0),
     { items } = useProperties();
   const { paused, setPaused, playing, interaction } = useCarouselPlayback();
@@ -41,7 +43,7 @@ export default function Home() {
       7000,
     );
     return () => clearInterval(interval);
-  }, [playing]);
+  }, [playing, scenes.length]);
   const locations = Object.entries(
     items.reduce((acc, p) => {
       if (p.location) acc[p.location] = (acc[p.location] || 0) + 1;
@@ -120,7 +122,8 @@ export default function Home() {
                 <img
                   key={scene.image}
                   src={scene.image}
-                  alt={scene.label + " · imagen de inspiración"}
+                  alt={scene.label}
+                  style={{objectPosition:scene.position||'center'}}
                   className={i === slide ? "active" : ""}
                   loading={i === 0 ? "eager" : "lazy"}
                 />
@@ -129,6 +132,8 @@ export default function Home() {
             <div className="hero-photo-label">
               <span>ALFARO / {String(slide + 1).padStart(2, "0")}</span>
               <b>{scenes[slide].label}</b>
+              {scenes[slide].subtitle&&<p>{scenes[slide].subtitle}</p>}
+              {scenes[slide].href&&<Link to={scenes[slide].href} className="text-link">{scenes[slide].buttonLabel} <ArrowUpRight size={16}/></Link>}
             </div>
             <div className="hero-navigation">
               <button
