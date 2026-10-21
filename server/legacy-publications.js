@@ -41,6 +41,9 @@ export async function applyLegacy(db,body,origin){
     await db.query('UPDATE properties SET ? WHERE id=?',[fields,body.portalId]);
     // Resolve URLs on the server; the browser can only select current image IDs.
     await db.query('DELETE FROM sub_properties WHERE property_ref_id=? AND id NOT IN (?)',[body.portalId,[0,...s.photos.map(p=>p.id)]]);
+    if(s.coverPhotoId!==0&&s.photos.some(p=>p.id===0)&&!s.photos.some(p=>p.id!==0&&eligible.get(p.id).image===current.image)){
+     const photo=s.photos.find(p=>p.id===0);await db.query('INSERT INTO sub_properties(property_id,property_ref_id,content,text_content,image,`order`) VALUES(?,?,?,?,?,?)',[body.portalId,body.portalId,photo.caption.slice(0,50),photo.caption,current.image,s.photos.findIndex(p=>p.id===0)+1]);
+    }
     for(const [index,p]of s.photos.entries())if(p.id!==0)await db.query('UPDATE sub_properties SET content=?,text_content=?,`order`=? WHERE id=? AND property_ref_id=?',[p.caption.slice(0,50),p.caption,index+1,p.id,body.portalId]);
    }
    await db.query('UPDATE publications SET publication_status=? WHERE property_id=?',[body.status,body.portalId]);
