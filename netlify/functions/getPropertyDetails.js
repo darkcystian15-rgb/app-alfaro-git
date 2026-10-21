@@ -71,7 +71,7 @@ export async function handler(event) {
       statusCode: 500,
       body: JSON.stringify({
         message: "Error al traer detalles de la propiedad",
-        error: error.message,
+        error: "No se pudo completar la consulta",
       }),
     };
   }

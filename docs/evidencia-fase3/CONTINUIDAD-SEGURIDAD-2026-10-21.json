@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-21",
+  "sourceCommit": "90f734a",
+  "database": "inmobi16_portal",
+  "databaseWrites": false,
+  "productionConfigurationChanged": false,
+  "checks": {
+    "orphanGallery": 6,
+    "orphanInfo": 0,
+    "zeroOrMissingArea": 4,
+    "emptyAddress": 2,
+    "missingType": 64,
+    "missingModality": 64,
+    "missingDistrict": 64,
+    "unknownCurrency": 0,
+    "missingPublication": 0,
+    "invalidApproval": 0,
+    "invalidGalleryReference": 0,
+    "invalidInfoReference": 0
+  },
+  "backup": {
+    "encrypted": true,
+    "tables": 14,
+    "views": 3,
+    "sha256": "6ea5aa87e6827cad51a82ddcde487f41505a17ae09e9722afaaf3a4f43963b29",
+    "readBackVerified": true,
+    "offsite": false,
+    "mediaIncluded": false,
+    "restorationTested": false
+  },
+  "catalogProposals": {
+    "modalityUnique": 64,
+    "districtUnique": 64,
+    "typeUnique": 0,
+    "applied": false
+  },
+  "tests": {
+    "existing": true,
+    "phase3": true,
+    "build": true
+  },
+  "phase3Complete": false
+}

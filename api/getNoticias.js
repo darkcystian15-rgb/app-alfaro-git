@@ -51,7 +51,7 @@ export default async function handler(req, res) {
 
     return res.status(500).json({
       message: "Error al traer noticias",
-      error: error.message,
+      error: "No se pudo completar la consulta",
     });
   }
 }

@@ -56,7 +56,7 @@ export default async function handler(req, res) {
       .setHeader("Access-Control-Allow-Origin", "*")
       .json({
         message: "Error al traer asesores",
-        error: error.message,
+        error: "No se pudo completar la consulta",
       });
   }
 }

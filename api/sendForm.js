@@ -33,7 +33,7 @@ export default async function handler(req, res) {
   try {
     // 🔹 Parsear body desde el frontend
     const data = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
-    console.log("📦 Datos recibidos:", data);
+
 
     // 🧠 Validar token reCAPTCHA antes de continuar
     const recaptchaToken = data.recaptchaToken;
@@ -108,19 +108,19 @@ export default async function handler(req, res) {
 
     console.log("🌐 Estado HTTP Apps Script:", response.status);
     const text = await response.text();
-    console.log("📬 Respuesta cruda de Apps Script:", text.slice(0, 200) + "...");
+
 
     // 🔹 Intentar parsear respuesta JSON
     let result;
     try {
       result = JSON.parse(text);
-      console.log("✅ Apps Script devolvió JSON válido:", result);
+
     } catch (err) {
       console.error("❌ Respuesta de Apps Script no es JSON válido:", err.message);
       result = {
         success: false,
         message: "Respuesta de Apps Script no es JSON válida",
-        raw: text,
+
       };
     }
 
@@ -144,7 +144,7 @@ export default async function handler(req, res) {
       .setHeader("Access-Control-Allow-Origin", "*")
       .json({
         success: false,
-        message: error.message,
+        message: "No se pudo enviar el formulario. Intenta nuevamente.",
       });
   }
 }
