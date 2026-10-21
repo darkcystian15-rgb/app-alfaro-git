@@ -74,9 +74,27 @@ descargas JPG/PDF. Cero errores de JavaScript y cero escrituras de negocio.
 
 Las correcciones posteriores de la simulación táctil y autenticación de la
 herramienta de prueba no cambian el código de la aplicación validada.
-Se integra este PR en `main` para que la integración GitHub de Vercel publique
-el mismo código. La comprobación de la dirección pública se realiza después de
-integrarlo y se registra al cerrar la entrega.
+PR #3 integrado. La integración GitHub de Vercel publicó `main` con el commit
+`eeb31c044de9fb0a1502af3fa99102126c10429e` en el despliegue
+`dpl_GJG2pjcd2kFxR1ZLsRAeVqfUEh5k`, estado **READY**.
+
+Comprobación pública completada el 21 de octubre de 2026, 01:44 UTC:
+https://app-alfaro-git-smoky.vercel.app.
+- Coincidencia exacta de GitHub main, clon local y commit desplegado.
+- Ambas pruebas Chromium completas correctas contra la dirección pública:
+  selección/carruseles y regresión. Cero errores de JavaScript y escrituras.
+- Logo servido con SHA-256 original
+  `2f3d5847ad4c701c73813d254b333a81315810a0789f84f48fd1b03006f84199`.
+- JPG y PDF descargados y verificados; metadatos específicos para WhatsApp v3
+  y respuesta SPA para visitantes humanos.
+- API públicas HTTP 200: catálogo 64 inmuebles, destacados 8, opciones 3 claves
+  y detalle de prueba con 2 claves. Solo se efectuaron lecturas.
+- Recursos verificados: `index-5cdafaac.css` e `index-b2f2c079.js`, idénticos
+  a los de la compilación validada. Los commits de cierre solo actualizan
+  documentación y evidencia; no cambian estos recursos ni las funciones.
+
+Evidencia agregada sin datos personales ni credenciales:
+[EVIDENCIA-SELECCION-CARRUSELES-LOGO.json](EVIDENCIA-SELECCION-CARRUSELES-LOGO.json).
 
 Proyecto Vercel fijado: `prj_W5ADa1iBP42vjncafADM4jm8QBWk`, equipo `puma19`.
 Se mantienen credenciales y alcance Production existentes. No se modifican Cystian,

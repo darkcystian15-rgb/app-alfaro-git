@@ -32,5 +32,106 @@
     "outboundWrites": []
   },
   "unitCaseDefinitions": 17,
-  "logoOriginalSha256": "2f3d5847ad4c701c73813d254b333a81315810a0789f84f48fd1b03006f84199"
+  "logoOriginalSha256": "2f3d5847ad4c701c73813d254b333a81315810a0789f84f48fd1b03006f84199",
+  "productionSelection": {
+    "base": "https://app-alfaro-git-smoky.vercel.app",
+    "results": [
+      "Portada y destacados avanzan automáticamente; pausa real y navegación circular funcionan",
+      "Movimiento reducido inicia ambos carruseles pausados; gesto horizontal cambia portada y desplazamiento vertical no la cambia",
+      "Administración: persistencia, corazones, comparación, límite 10, elección individual, nota no persistente, mensaje correcto, vaciado con confirmación y móvil sin desbordamiento",
+      "Guardados retirados del catálogo se explican y se excluyen de WhatsApp"
+    ],
+    "errors": [],
+    "writes": [],
+    "checkedAt": "2026-10-21T00:37:18.974Z"
+  },
+  "productionRegression": {
+    "base": "https://app-alfaro-git-smoky.vercel.app",
+    "uiOnly": false,
+    "results": [
+      "All featured properties reachable; hero and featured carousels controlled",
+      "Real catalogue, numbered pagination and URL state",
+      "Favorites persist after reload; comparison capped at three and displays actual fields",
+      "Multiple districts, shareable filter URL, reload and clearing chips",
+      "Price filters respect explicit currency and empty results",
+      "Property detail returns to original search and pagination",
+      "Gallery opens and closes by keyboard; institutional WhatsApp includes canonical property URL",
+      "WhatsApp crawler receives server metadata; real JPG 1200x630 and branded PDF downloads succeed",
+      "Institutional routes and mobile overflow checked; offering prepares WhatsApp without sending or POST",
+      "HTTP failure/retry, empty results, broken images and HTML sanitization verified with isolated fixtures"
+    ],
+    "runtimeErrors": [],
+    "outboundWrites": []
+  },
+  "productionAlignment": {
+    "verifiedAt": "2026-10-21T01:44:07.496Z",
+    "url": "https://app-alfaro-git-smoky.vercel.app",
+    "localMain": "eeb31c044de9fb0a1502af3fa99102126c10429e",
+    "githubMain": "eeb31c044de9fb0a1502af3fa99102126c10429e",
+    "vercelCommit": "eeb31c044de9fb0a1502af3fa99102126c10429e",
+    "deploymentId": "dpl_GJG2pjcd2kFxR1ZLsRAeVqfUEh5k",
+    "state": "READY",
+    "assets": [
+      "/assets/index-5cdafaac.css",
+      "/assets/index-b2f2c079.js"
+    ],
+    "applicationMatchesTestedCommit": true,
+    "logoOriginalSha256": "2f3d5847ad4c701c73813d254b333a81315810a0789f84f48fd1b03006f84199",
+    "crawlerMetadataVersion": 3,
+    "humanResponse": "React SPA",
+    "readonlyApiResults": [
+      {
+        "path": "/api/getProperties",
+        "status": 200,
+        "count": 64
+      },
+      {
+        "path": "/api/getProperties?featured=true",
+        "status": 200,
+        "count": 8
+      },
+      {
+        "path": "/api/get-options",
+        "status": 200,
+        "count": 3
+      },
+      {
+        "path": "/api/getPropertyDetails?id=36",
+        "status": 200,
+        "count": 2
+      }
+    ],
+    "databaseScopes": [
+      {
+        "key": "DB_PASSWORD",
+        "target": [
+          "production"
+        ]
+      },
+      {
+        "key": "DB_USER",
+        "target": [
+          "production"
+        ]
+      },
+      {
+        "key": "DB_NAME",
+        "target": [
+          "production"
+        ]
+      },
+      {
+        "key": "DB_HOST",
+        "target": [
+          "production"
+        ]
+      },
+      {
+        "key": "DB_PORT",
+        "target": [
+          "production"
+        ]
+      }
+    ]
+  }
 }
