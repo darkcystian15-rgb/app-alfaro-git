@@ -64,3 +64,22 @@ columna única, permitiendo una adopción posterior voluntaria. No hay migració
 El ID 0 identifica la portada previa. Suspender/retirar no exige completar datos.
 Publicar exige contenido público válido; DNI, tasación y visitas son requisitos
 exclusivos del flujo de fichas nuevas de intranet.
+
+## Información adicional y mapas
+
+La instantánea admite additionalInfoMode (preserve/replace), additionalInfo con
+bloques title/content, y map con mode preserve/none/exact/approximate y coordenadas.
+La ausencia de estos campos conserva el contenido anterior. Ambos apartados son
+opcionales; se validan solo cuando se activan/editaron. replace vacío retira bloques.
+Se reutiliza mas_info, reemplazando la lista dentro de la transacción y en orden;
+títulos de 50 y contenidos escapados de hasta 1000 caracteres, hasta 20 bloques.
+
+map preserve no sobrescribe coordenadas al actualizar o adoptar un anuncio. none
+oculta el mapa; exact publica un punto válido; approximate redondea a dos decimales
+antes de guardarlo y la API pública vuelve a aplicar esa precisión. El modo se
+registra en la clave map:{id} del almacén instalado, sin property_id asociado.
+La API de ficha devuelve map_mode y coordenadas efectivas; el sitio rotula los
+puntos aproximados y no muestra mapas ocultos ni coordenadas inválidas.
+GET administrativo extras requiere autenticación e ID concreto y permite cargar
+los bloques/mapa de un anuncio adoptado por una ficha interna. Los anuncios legados
+incluyen estos campos en su revisión. Sin migraciones ni cambios masivos de datos.

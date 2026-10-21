@@ -339,12 +339,13 @@ export default function PropertyResumenPage() {
               ))}
             </section>
           )}
-          {p.latitude &&
-            p.longitude &&
+          {p.latitude != null &&
+            p.longitude != null &&
+            p.map_mode !== 'none' &&
             Number.isFinite(Number(p.latitude)) &&
             Number.isFinite(Number(p.longitude)) && (
               <section className="detail-section">
-                <h2>Ubicación</h2>
+                <h2>{p.map_mode==='approximate'?'Ubicación aproximada':'Ubicación'}</h2>{p.map_mode==='approximate'&&<p>El punto indica una zona referencial, no la dirección exacta del inmueble.</p>}
                 <iframe
                   className="property-map"
                   title="Mapa de la propiedad"

@@ -1,3 +1,4 @@
+import {readMapMode,publicMapFields} from '../server/property-extras.js';
 // /api/getPropertyDetails.js
 import { pool } from "./db.js";
 
@@ -51,6 +52,7 @@ export default async function handler(req, res) {
     }
 
     const property = propertyRows[0];
+    Object.assign(property,publicMapFields(property,await readMapMode(pool,property.id)));
 
     // 🔹 Consultar subpropiedades relacionadas (galería / info extra)
     const [subProperties] = await pool.query(

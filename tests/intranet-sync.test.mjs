@@ -38,3 +38,12 @@ test('Un anuncio anterior acepta su data pública sin un nuevo sourceId interno'
  for(const patch of [{portalId:0},{expectedSourceRevision:''},{snapshot:{...body.snapshot,photos:[{id:99,caption:''}],coverPhotoId:0}},{snapshot:{...body.snapshot,price:-1}}])assert.throws(()=>validateSync({...body,...patch}));
  assert.doesNotThrow(()=>validateSync({...body,status:'suspended',snapshot:null}));
 });
+
+test('El receptor valida bloques opcionales y mapas sin aceptar HTML o URLs arbitrarias',async()=>{
+ const {validatePropertyExtras,publicMapFields}=await import('../server/property-extras.js');
+ assert.doesNotThrow(()=>validatePropertyExtras({}));assert.doesNotThrow(()=>validatePropertyExtras({additionalInfoMode:'replace',additionalInfo:[],map:{mode:'none'}}));
+ for(const snapshot of [{additionalInfoMode:'replace',additionalInfo:[{title:'Sin contenido',content:''}]},{map:{mode:'exact',latitude:100,longitude:20}},{map:{mode:'iframe',latitude:0,longitude:0}}])assert.throws(()=>validatePropertyExtras(snapshot));
+ assert.deepEqual(publicMapFields({latitude:-9.123456,longitude:-78.54321},'approximate'),{latitude:-9.12,longitude:-78.54,map_mode:'approximate'});
+ assert.deepEqual(publicMapFields({latitude:-9.123456,longitude:-78.54321},'none'),{latitude:null,longitude:null,map_mode:'none'});
+ assert.equal(publicMapFields({latitude:0,longitude:-78},null).map_mode,'exact');
+});

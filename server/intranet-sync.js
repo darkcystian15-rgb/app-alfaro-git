@@ -1,3 +1,4 @@
+import {validatePropertyExtras,writePropertyExtras} from './property-extras.js';
 import {legacyListings,validateLegacy,applyLegacy} from './legacy-publications.js';
 import {createHash,timingSafeEqual} from 'node:crypto';
 const knownTypes=['Casa','Departamento','Terreno','Oficina','Local Comercial','Terreno Comercial','Hotel'];
@@ -15,6 +16,7 @@ export function validateSync(body){
  if(body.kind!=='property'||!Number.isSafeInteger(body.sourceId)||body.sourceId<1||!['published','suspended','withdrawn'].includes(body.status))throw new Error('invalid');
  const s=body.snapshot;
  if(body.status!=='published')return;
+ validatePropertyExtras(s);
  if(!s||s.sourceId!==body.sourceId||typeof s.title!=='string'||s.title.length<10||s.title.length>100||typeof s.description!=='string'||s.description.length<40||s.description.length>8000||typeof s.location!=='string'||!s.location||s.location.length>250||typeof s.district!=='string'||!s.district||s.district.length>25||!knownTypes.includes(s.type)||!['venta','alquiler'].includes(s.operation))throw new Error('invalid');
  if(s.price!==null&&(!positive(s.price)||!['PEN','USD'].includes(s.currency)))throw new Error('invalid');
  if(!Array.isArray(s.photos)||!s.photos.length||s.photos.length>100||s.photos.some(p=>!Number.isSafeInteger(p.id)||p.id<1||typeof p.caption!=='string'||p.caption.length>100)||!s.photos.some(p=>p.id===s.coverPhotoId)||new Set(s.photos.map(p=>p.id)).size!==s.photos.length)throw new Error('invalid');
@@ -46,8 +48,10 @@ export async function applySync(db,body,origin){
     const districts=await db.query('SELECT id FROM distritos WHERE LOWER(nombre)=LOWER(?)',[s.district]);
     // No inventar geografía administrativa: la etiqueta pública se conserva incluso si no hay ID único.
     const district=districts[0].length===1?districts[0][0].id:null;
-    const fields={title:s.title,image:syncMediaUrl(body.sourceId,s.coverPhotoId),price:s.price??0,price_on_request:s.price===null?1:0,moneda:(s.currency==='PEN'?'S/':'US$')+(s.priceBasis==='por_unidad'?' c/u':''),currency_code:s.currency,price_basis:s.priceBasis==='por_unidad'?'per_unit':null,address:s.location,location:s.district,status:s.operation==='alquiler'?'Alquiler':'Venta',bedrooms:s.bedrooms??0,bathrooms:s.bathrooms??0,cocheras:s.garages??0,area:s.landArea??0,area_c:s.builtArea??0,description,distribution:escaped(s.rentalTerms||''),latitude:0,longitude:0,destacado:s.featured?1:0,property_type_id:type.id,modality_id:mode.id,district_id:district};
-    if(id)await db.query('UPDATE properties SET ? WHERE id=?',[fields,id]);else{const [created]=await db.query('INSERT INTO properties SET ?',[fields]);id=created.insertId;}
+    const fields={title:s.title,image:syncMediaUrl(body.sourceId,s.coverPhotoId),price:s.price??0,price_on_request:s.price===null?1:0,moneda:(s.currency==='PEN'?'S/':'US$')+(s.priceBasis==='por_unidad'?' c/u':''),currency_code:s.currency,price_basis:s.priceBasis==='por_unidad'?'per_unit':null,address:s.location,location:s.district,status:s.operation==='alquiler'?'Alquiler':'Venta',bedrooms:s.bedrooms??0,bathrooms:s.bathrooms??0,cocheras:s.garages??0,area:s.landArea??0,area_c:s.builtArea??0,description,distribution:escaped(s.rentalTerms||''),destacado:s.featured?1:0,property_type_id:type.id,modality_id:mode.id,district_id:district};
+    if(!id){const [created]=await db.query('INSERT INTO properties SET ?',[{...fields,latitude:0,longitude:0}]);id=created.insertId;}
+    await writePropertyExtras(db,id,s,fields);
+    await db.query('UPDATE properties SET ? WHERE id=?',[fields,id]);
     await db.query("INSERT INTO publications(property_id,publication_status,approved_at,source_system,internal_reference) VALUES (?,'published',UTC_TIMESTAMP(),'alfaro_intranet',?) ON DUPLICATE KEY UPDATE publication_status='published',approved_at=UTC_TIMESTAMP(),source_system='alfaro_intranet',internal_reference=VALUES(internal_reference)",[id,String(body.sourceId)]);
     await db.query('DELETE FROM sub_properties WHERE property_ref_id=?',[id]);
     for(const [index,photo] of s.photos.entries())await db.query('INSERT INTO sub_properties(property_id,property_ref_id,content,text_content,image,`order`) VALUES(?,?,?,?,?,?)',[id,id,photo.caption.slice(0,50),photo.caption,syncMediaUrl(body.sourceId,photo.id),index+1]);
@@ -68,10 +72,10 @@ export function createIntranetSyncHandler({pool,secret,bridgeUrl,origin,fetcher=
  }
  if(!['GET','HEAD'].includes(req.method))return res.status(405).json({error:'Método no permitido'});
  try{
-  if(req.query.admin==='existing'){
+  if(['existing','extras'].includes(req.query.admin)){
    if(!syncAuthorized(req,secret))return res.status(401).json({error:'No autorizado'});
-   const id=req.query.id==null?undefined:Number(req.query.id);if(id!==undefined&&(!Number.isSafeInteger(id)||id<1))return res.status(400).json({error:'ID no válido'});
-   return res.status(200).json({items:await legacyListings(pool,id)});
+   const id=req.query.id==null?undefined:Number(req.query.id);if(req.query.admin==='extras'&&id===undefined)return res.status(400).json({error:'Indica un anuncio'});if(id!==undefined&&(!Number.isSafeInteger(id)||id<1))return res.status(400).json({error:'ID no válido'});
+   return res.status(200).json({items:await legacyListings(pool,id,false,req.query.admin==='extras')});
   }
   if(req.query.content==='home'){
    const [[row]]=await pool.query("SELECT contenido FROM portal_intranet_sync WHERE clave='home'");
