@@ -6,7 +6,7 @@ export const absolutePropertyUrl = (id) => SITE_URL + propertyUrl(id);
 export const currencyCode = (value) =>
   /^(PEN|S\/\.?|sol(?:es)?)$/i.test(String(value || "").trim())
     ? "PEN"
-    : /^(USD|US\$|\$|d[oó]lares?)$/i.test(String(value || "US$").trim())
+    : /^(USD|US\$(?: c\/u)?|\$|d[oó]lares?)$/i.test(String(value || "US$").trim())
       ? "USD"
       : String(value).trim();
 export function formatPrice(value, currency = "US$") {
@@ -19,7 +19,7 @@ export function formatPrice(value, currency = "US$") {
     return "Precio a consultar";
   const code = currencyCode(currency),
     symbol = code === "PEN" ? "S/" : code === "USD" ? "US$" : code;
-  return `${symbol} ${new Intl.NumberFormat("es-PE", { maximumFractionDigits: 2 }).format(Number(value))}`;
+  return `${symbol} ${new Intl.NumberFormat("es-PE", { maximumFractionDigits: 2 }).format(Number(value))}${/c\/u/i.test(String(currency)) ? " c/u" : ""}`;
 }
 export function contactUrl(property) {
   const message = property

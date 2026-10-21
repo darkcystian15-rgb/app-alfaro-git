@@ -2,6 +2,7 @@
 import { pool } from "./db.js"; // ajusta la ruta según tu estructura
 
 export default async function handler(req, res) {
+  res.setHeader("Cache-Control", "no-store");
   // 🔹 Manejo CORS para requests desde cualquier origen
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
@@ -31,7 +32,7 @@ export default async function handler(req, res) {
     const [rows] = await pool.query(
       `
       SELECT id, titulo_info, descripcion_info, id_properties
-      FROM mas_info
+      FROM public_property_info
       WHERE id_properties = ?
       ORDER BY id ASC
       `,
@@ -43,7 +44,6 @@ export default async function handler(req, res) {
     console.error("❌ ERROR en getMasInfo:", error);
     return res.status(500).json({
       message: "Error al traer información adicional",
-      error: error.message,
     });
   }
 }

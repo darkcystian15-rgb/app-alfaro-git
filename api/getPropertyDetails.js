@@ -2,6 +2,7 @@
 import { pool } from "./db.js";
 
 export default async function handler(req, res) {
+  res.setHeader("Cache-Control", "no-store");
   // 🔹 Manejo CORS
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
@@ -39,7 +40,7 @@ export default async function handler(req, res) {
         bedrooms, bathrooms, area, description,
         latitude, longitude,
         address, frontera, Largo, area_c, cocheras, distribution, antiguedad,cerco_perimetrico,garantia,adelanto    
-      FROM properties
+      FROM public_properties
       WHERE id = ?
       `,
       [propertyId]
@@ -55,9 +56,9 @@ export default async function handler(req, res) {
     const [subProperties] = await pool.query(
       `
       SELECT id, property_id, content, image, \`order\`, text_content
-      FROM sub_properties
+      FROM public_property_gallery
       WHERE property_id = ?
-      ORDER BY \`order\` ASC
+      ORDER BY \`order\` ASC, id ASC
       `,
       [propertyId]
     );
@@ -71,7 +72,6 @@ export default async function handler(req, res) {
     console.error("❌ ERROR en getPropertyDetails:", error);
     return res.status(500).json({
       message: "Error al traer detalles de la propiedad",
-      error: error.message,
     });
   }
 }

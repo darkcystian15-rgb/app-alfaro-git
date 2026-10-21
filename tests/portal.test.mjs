@@ -89,3 +89,7 @@ test("WhatsApp uses the institutional contact and an encoded summary URL", () =>
   assert.ok(url.searchParams.get("text").includes("Casa & local"));
   assert.ok(url.searchParams.get("text").includes("/propiedades/resumen/123"));
 });
+
+test("per-unit dollar prices retain their commercial condition", () => {
+  assert.equal(formatPrice(1500, "US$ c/u"), "US$ 1,500 c/u");
+});

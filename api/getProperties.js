@@ -2,6 +2,7 @@
 import { pool } from "./db.js";
 
 export default async function handler(req, res) {
+  res.setHeader("Cache-Control", "no-store");
   try {
     const { title = "", location = "", status = "", featured } = req.query || {};
 
@@ -58,7 +59,7 @@ export default async function handler(req, res) {
     let query = `
       SELECT id, title, image, price, moneda, location, address, status,
              bedrooms, bathrooms, area, created_at,destacado
-      FROM properties
+      FROM public_properties
       WHERE 1=1
     `;
     const queryParams = [];
@@ -126,7 +127,6 @@ export default async function handler(req, res) {
     console.error("❌ Error al traer propiedades:", err);
     return res.status(500).json({
       message: "Error al traer propiedades",
-      error: err.message,
     });
   }
 }

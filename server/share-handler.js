@@ -7,6 +7,7 @@ export function createShareHandler({
   const cache = new Map();
   return async function handler(req, res) {
     res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Cache-Control", "no-store");
     if (!["GET", "HEAD"].includes(req.method)) {
       res.setHeader("Allow", "GET, HEAD");
       return res.status(405).json({ message: "Método no permitido" });
@@ -25,7 +26,7 @@ export function createShareHandler({
       const p = rows[0];
       res.setHeader(
         "Cache-Control",
-        "public, max-age=60, s-maxage=300, stale-while-revalidate=60",
+        "no-store",
       );
       if (format === "html") {
         res.setHeader("Content-Type", "text/html; charset=utf-8");
