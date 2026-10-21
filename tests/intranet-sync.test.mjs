@@ -27,3 +27,14 @@ test('Las tarjetas sociales solo admiten la ruta de foto autorizada del propio p
  assert.equal(safeImageUrl('/api/intranet-sync?media=banner&id=2'),null);
  assert.equal(safeImageUrl('http://127.0.0.1/private'),null);
 });
+
+test('La consulta administrativa de anuncios antiguos exige autenticación',async()=>{
+ let touched=false;const handler=createIntranetSyncHandler({pool:{query(){touched=true;throw Error();}},secret});const res={setHeader(){},status(n){this.code=n;return this;},json(){return this;}};
+ await handler({method:'GET',query:{admin:'existing'},headers:{}},res);assert.equal(res.code,401);assert.equal(touched,false);
+});
+test('Un anuncio anterior acepta su data pública sin un nuevo sourceId interno',()=>{
+ const body={kind:'legacy',portalId:101,revision:1,expectedSourceRevision:'a'.repeat(64),status:'published',snapshot:{title:'Casa',description:'Texto existente',location:'Referencia',district:'Chimbote',operation:'venta',price:null,photos:[{id:0,caption:'Foto actual'}],coverPhotoId:0}};
+ assert.doesNotThrow(()=>validateSync(body));
+ for(const patch of [{portalId:0},{expectedSourceRevision:''},{snapshot:{...body.snapshot,photos:[{id:99,caption:''}],coverPhotoId:0}},{snapshot:{...body.snapshot,price:-1}}])assert.throws(()=>validateSync({...body,...patch}));
+ assert.doesNotThrow(()=>validateSync({...body,status:'suspended',snapshot:null}));
+});

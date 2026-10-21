@@ -1,9 +1,11 @@
+import {legacyListings,validateLegacy,applyLegacy} from './legacy-publications.js';
 import {createHash,timingSafeEqual} from 'node:crypto';
 const knownTypes=['Casa','Departamento','Terreno','Oficina','Local Comercial','Terreno Comercial','Hotel'];
 export function canonicalSyncJson(value){if(Array.isArray(value))return '['+value.map(canonicalSyncJson).join(',')+']';if(value&&typeof value==='object')return '{'+Object.keys(value).sort().map(key=>JSON.stringify(key)+':'+canonicalSyncJson(value[key])).join(',')+'}';return JSON.stringify(value);}
 export function syncAuthorized(request,secret){const actual=Buffer.from(request.headers.authorization||''),expected=Buffer.from(`Bearer ${secret||''}`);return Boolean(secret&&secret.length>=32&&actual.length===expected.length&&timingSafeEqual(actual,expected));}
 const positive=value=>Number.isFinite(Number(value))&&Number(value)>0;
 export function validateSync(body){
+ if(body?.kind==='legacy')return validateLegacy(body);
  if(!body||!Number.isSafeInteger(body.revision)||body.revision<1)throw new Error('invalid');
  if(body.kind==='banners'){
   if(!Array.isArray(body.items)||!body.items.length||body.items.length>10)throw new Error('invalid');
@@ -20,6 +22,7 @@ export function validateSync(body){
 const escaped=value=>String(value||'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 export const syncMediaUrl=(source,id,kind='photo')=>kind==='photo'?`/api/intranet-sync?media=photo&property=${source}&id=${id}`:`/api/intranet-sync?media=banner&id=${encodeURIComponent(id)}`;
 export async function applySync(db,body,origin){
+ if(body?.kind==='legacy')return applyLegacy(db,body,origin);
  validateSync(body);const hash=createHash('sha256').update(canonicalSyncJson(body)).digest('hex');
  await db.beginTransaction();
  try{
@@ -65,6 +68,11 @@ export function createIntranetSyncHandler({pool,secret,bridgeUrl,origin,fetcher=
  }
  if(!['GET','HEAD'].includes(req.method))return res.status(405).json({error:'Método no permitido'});
  try{
+  if(req.query.admin==='existing'){
+   if(!syncAuthorized(req,secret))return res.status(401).json({error:'No autorizado'});
+   const id=req.query.id==null?undefined:Number(req.query.id);if(id!==undefined&&(!Number.isSafeInteger(id)||id<1))return res.status(400).json({error:'ID no válido'});
+   return res.status(200).json({items:await legacyListings(pool,id)});
+  }
   if(req.query.content==='home'){
    const [[row]]=await pool.query("SELECT contenido FROM portal_intranet_sync WHERE clave='home'");
    const data=typeof row?.contenido==='string'?JSON.parse(row.contenido):row?.contenido;

@@ -47,3 +47,20 @@ La aplicación anterior puede coexistir con el esquema aditivo; no borrar asocia
 ni anuncios generados para volver a desplegar. Los cierres se retiran expresamente
 desde la intranet; todavía no hay sincronización automática de cierres ni reintentos
 en segundo plano. Los fallos quedan visibles para reintento manual.
+
+## Gestión del catálogo previo — 21 de octubre de 2026
+
+GET autenticado `?admin=existing` (opcional `id`) devuelve únicamente campos
+públicos de anuncios legados aprobados, incluidos suspendidos/retirados, fotografías
+actuales y hash de versión. No exige ficha interna. La intranet puede editar,
+actualizar, suspender o republicar mediante POST `kind=legacy`, conservando ID y
+origen. La asociación con un inmueble interno sigue siendo opcional y explícita.
+
+El receptor nunca inserta propiedades para esta operación. Rechaza cambios sobre
+anuncios ya adoptados por el flujo nativo y cambios con hash remoto antiguo. Resuelve
+las imágenes por ID existente; no acepta URLs nuevas enviadas por el navegador.
+Las entregas se registran con clave `legacy:{id}` y sin propiedad asociada en la
+columna única, permitiendo una adopción posterior voluntaria. No hay migración.
+El ID 0 identifica la portada previa. Suspender/retirar no exige completar datos.
+Publicar exige contenido público válido; DNI, tasación y visitas son requisitos
+exclusivos del flujo de fichas nuevas de intranet.
